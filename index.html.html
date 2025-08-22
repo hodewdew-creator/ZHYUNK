@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PillCounter – Web Prototype</title>
+  <title>PillCounter – Web Prototype v2</title>
   <style>
     :root { --bg:#0b0d10; --panel:#12161b; --accent:#5eead4; --muted:#9aa4b2; }
     *{box-sizing:border-box}
@@ -15,8 +15,7 @@
     .badge{padding:6px 10px;border-radius:12px;background:#0e1b17;border:1px solid #1f3a33;color:#ccfbf1;font-weight:700}
     .panel{background:var(--panel);border:1px solid #1f2937;border-radius:14px;padding:12px}
     .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-    input[type="text"], input[type="number"], select{background:#0f141a;border:1px solid #233042;border-radius:10px;color:#e5e7eb;padding:10px 12px}
-    input[type="range"]{width:160px}
+    input[type="text"]{background:#0f141a;border:1px solid #233042;border-radius:10px;color:#e5e7eb;padding:10px 12px}
     button{cursor:pointer;background:#111827;border:1px solid #253041;color:#e5e7eb;border-radius:12px;padding:10px 14px;font-weight:700}
     button.primary{background:#0f766e;border-color:#115e59}
     button.ghost{background:#0f141a}
@@ -30,14 +29,15 @@
     .kv{display:flex;gap:8px;align-items:center}
     .tag{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #2b3543;background:#0f141a;color:#cbd5e1}
     .footer{color:#94a3b8;font-size:12px;text-align:center;padding:18px}
+    details summary{cursor:pointer}
   </style>
 </head>
 <body>
   <header>
     <div class="wrap row">
-      <div class="title">💊 PillCounter – Web Prototype</div>
+      <div class="title">💊 PillCounter – Web Prototype v2</div>
       <div class="badge" id="totalBadge">총 0개</div>
-      <div class="tag">카메라 허용 → 촬영 → 자동 카운트 → PNG 저장</div>
+      <div class="tag">원탭 스마트 카운트 · 탭으로 빠른 보정</div>
     </div>
   </header>
 
@@ -50,15 +50,13 @@
 
       <div class="panel">
         <div class="controls">
-          <div class="kv"><span class="hint">환자 이름</span>
+          <div class="kv"><span class="hint">이름</span>
             <input id="patient" type="text" placeholder="고양이이름" value="고양이이름" />
           </div>
           <button id="btnStart" class="primary">카메라 시작</button>
-          <button id="btnShot">촬영</button>
-          <button id="btnRecount" class="ghost">재검출</button>
-          <button id="btnMinus">-1</button>
-          <button id="btnPlus">+1</button>
-          <button id="btnSave" class="primary">PNG 저장</button>
+          <button id="btnSmart" class="primary">스마트 카운트 (촬영→검출)</button>
+          <button id="btnSave">PNG 저장</button>
+          <button id="btnReset" class="ghost">초기화</button>
           <span id="status" class="hint"></span>
         </div>
       </div>
@@ -66,34 +64,25 @@
 
     <aside class="stack">
       <div class="panel stack">
-        <div class="row" style="justify-content:space-between">
-          <strong>검출 파라미터</strong>
-          <span class="hint">현장서 간단 튜닝</span>
-        </div>
-        <div class="controls">
-          <label class="kv">S ≥ <input id="sMin" type="range" min="0" max="100" value="20" /> <span id="sMinVal" class="tag">20</span></label>
-          <label class="kv">V ≥ <input id="vMin" type="range" min="0" max="100" value="25" /> <span id="vMinVal" class="tag">25</span></label>
-          <label class="kv">최소 면적(px) <input id="minArea" type="number" value="140" min="10" step="10" style="width:110px" /></label>
-          <label class="kv">최대 면적(px) <input id="maxArea" type="number" value="5000" min="200" step="50" style="width:120px" /></label>
-        </div>
-        <div class="controls">
-          <label class="kv">색상 그룹:
-            <select id="colorMode">
-              <option value="auto" selected>자동(H 값으로 분류)</option>
-              <option value="none">그룹화 안 함</option>
-            </select>
-          </label>
-          <div id="buckets" class="row"></div>
-        </div>
+        <strong>조작법</strong>
+        <ul class="hint" style="margin:0 0 6px 18px">
+          <li><b>스마트 카운트</b> 한 번으로 자동 검출</li>
+          <li>잘못 잡힌 박스는 <b>캔버스를 탭</b>해서 제외/포함</li>
+          <li>무광 단색 배경 + 위에서 수직 촬영하면 정확도↑</li>
+        </ul>
       </div>
 
       <div class="panel stack">
-        <strong>사용 팁</strong>
-        <ul class="hint" style="margin:0 0 6px 18px">
-          <li>무광 단색 배경 + 위에서 수직 촬영하면 정확도↑</li>
-          <li>슬라이더로 S/V와 면적만 맞춰도 웬만한 캡슐/정제는 잡혀요</li>
-          <li>겹침/반사 강할 땐 -1/+1로 빠르게 보정</li>
-        </ul>
+        <details>
+          <summary><strong>고급설정 (선택)</strong> <span class="hint">수동 튜닝이 필요할 때만</span></summary>
+          <div class="controls" style="margin-top:10px">
+            <label class="kv">S ≥ <input id="sMin" type="range" min="0" max="100" value="20" /> <span id="sMinVal" class="tag">20</span></label>
+            <label class="kv">V ≥ <input id="vMin" type="range" min="0" max="100" value="25" /> <span id="vMinVal" class="tag">25</span></label>
+            <label class="kv">최소 면적(px) <input id="minArea" type="number" value="140" min="10" step="10" style="width:110px" /></label>
+            <label class="kv">최대 면적(px) <input id="maxArea" type="number" value="5000" min="200" step="50" style="width:120px" /></label>
+          </div>
+        </details>
+        <div id="buckets" class="row"></div>
       </div>
     </aside>
   </main>
@@ -105,37 +94,29 @@ const els = {
   video: document.getElementById('video'),
   overlay: document.getElementById('overlay'),
   btnStart: document.getElementById('btnStart'),
-  btnShot: document.getElementById('btnShot'),
-  btnRecount: document.getElementById('btnRecount'),
-  btnMinus: document.getElementById('btnMinus'),
-  btnPlus: document.getElementById('btnPlus'),
+  btnSmart: document.getElementById('btnSmart'),
   btnSave: document.getElementById('btnSave'),
+  btnReset: document.getElementById('btnReset'),
   totalBadge: document.getElementById('totalBadge'),
   status: document.getElementById('status'),
   patient: document.getElementById('patient'),
-  sMin: document.getElementById('sMin'),
-  vMin: document.getElementById('vMin'),
-  sMinVal: document.getElementById('sMinVal'),
-  vMinVal: document.getElementById('vMinVal'),
-  minArea: document.getElementById('minArea'),
-  maxArea: document.getElementById('maxArea'),
-  colorMode: document.getElementById('colorMode'),
+  // advanced (optional)
+  sMin: document.getElementById('sMin'), vMin: document.getElementById('vMin'),
+  sMinVal: document.getElementById('sMinVal'), vMinVal: document.getElementById('vMinVal'),
+  minArea: document.getElementById('minArea'), maxArea: document.getElementById('maxArea'),
   buckets: document.getElementById('buckets'),
 };
 
 let stream = null;
 let capturedImage = null; // ImageData of last shot
-let detections = []; // {bbox:[x,y,w,h], hue, area}
+let detections = []; // {bbox:[x,y,w,h], hue, area, include:true}
 
-const W = 720; const H = 960; // tall portrait; scales to device via CSS
+const W = 720; const H = 960; // portrait; scales to device via CSS
 const overlayCtx = els.overlay.getContext('2d');
-
-function fitCanvas() {
-  els.overlay.width = W; els.overlay.height = H;
-}
+function fitCanvas(){ els.overlay.width=W; els.overlay.height=H; }
 fitCanvas();
 
-// Camera start
+// Camera
 els.btnStart.onclick = async () => {
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: {ideal: 1280}, height: {ideal: 720} }, audio:false });
@@ -146,220 +127,97 @@ els.btnStart.onclick = async () => {
   }
 };
 
-// Capture current frame to offscreen canvas
-function grabFrame() {
-  const tmp = document.createElement('canvas');
-  // keep aspect fill: draw video to our portrait canvas centered
-  tmp.width = W; tmp.height = H;
+function grabFrame(){
+  const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H;
   const tctx = tmp.getContext('2d');
-  const vw = els.video.videoWidth, vh = els.video.videoHeight;
-  if (!vw || !vh) return null;
-  const targetAR = W/H, videoAR = vw/vh;
-  let dw, dh, dx, dy;
-  if (videoAR > targetAR) { // video wider
-    dh = H; dw = H*videoAR; dx = (W-dw)/2; dy = 0;
-  } else { // video taller
-    dw = W; dh = W/videoAR; dx = 0; dy = (H-dh)/2;
-  }
+  const vw = els.video.videoWidth, vh = els.video.videoHeight; if(!vw||!vh) return null;
+  const targetAR=W/H, videoAR=vw/vh; let dw,dh,dx,dy;
+  if(videoAR>targetAR){ dh=H; dw=H*videoAR; dx=(W-dw)/2; dy=0; } else { dw=W; dh=W/videoAR; dx=0; dy=(H-dh)/2; }
   tctx.drawImage(els.video, dx, dy, dw, dh);
   return tctx.getImageData(0,0,W,H);
 }
 
-// HSV helpers
+// Utils
 function rgb2hsv(r,g,b){
-  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx-mn;
-  let h=0; if(d!==0){
-    if(mx===r){ h=((g-b)/d)%6; }
-    else if(mx===g){ h=((b-r)/d)+2; }
-    else { h=((r-g)/d)+4; }
-    h*=60; if(h<0) h+=360;
-  }
-  const s = mx===0 ? 0 : d/mx; const v = mx;
-  return [h,s,v];
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn; let h=0;
+  if(d!==0){ if(mx===r){h=((g-b)/d)%6;} else if(mx===g){h=((b-r)/d)+2;} else {h=((r-g)/d)+4;} h*=60; if(h<0) h+=360; }
+  const s = mx===0 ? 0 : d/mx; const v = mx; return [h,s,v];
 }
+function hueBucket(h){ if((h>=330&&h<=360)||(h>=0&&h<=20)) return 'Red'; if(h>=40&&h<=75) return 'Yellow'; if(h>=80&&h<=160) return 'Green'; if(h>=190&&h<=260) return 'Blue'; if(h>=270&&h<=310) return 'Purple'; return 'Etc'; }
+function percentile(arr, p){ if(arr.length===0) return 0; const k=Math.min(arr.length-1, Math.max(0, Math.floor((p/100)*arr.length))); const copy=Array.from(arr).sort((a,b)=>a-b); return copy[k]; }
+function closeMask(mask,w,h){ const tmp=new Uint8Array(mask.length); for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let on=0; for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(mask[(y+dy)*w+(x+dx)]){on=1;break;} } if(on)break; } tmp[y*w+x]=on; } } const out=new Uint8Array(mask.length); for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let all=1; for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(!tmp[(y+dy)*w+(x+dx)]){all=0;break;} } if(!all)break; } out[y*w+x]=all; } } return out; }
+function connectedComponents(mask, width, height){ const labels=new Int32Array(width*height); let current=1; const uf=[]; function find(x){ while(uf[x]>0) x=uf[x]; return x; } function union(a,b){ a=find(a); b=find(b); if(a!==b) uf[b]=a; } for(let y=0;y<height;y++){ for(let x=0;x<width;x++){ const idx=y*width+x; if(!mask[idx]) continue; const neighbors=[]; if(x>0&&mask[idx-1]) neighbors.push(labels[idx-1]); if(y>0){ if(mask[idx-width]) neighbors.push(labels[idx-width]); if(x>0&&mask[idx-width-1]) neighbors.push(labels[idx-width-1]); if(x<width-1&&mask[idx-width+1]) neighbors.push(labels[idx-width+1]); } if(neighbors.length===0){ labels[idx]=current; uf[current]=0; current++; } else { const minLab=Math.min(...neighbors.filter(v=>v>0)); labels[idx]=minLab; for(const n of neighbors){ if(n>0&&n!==minLab) union(minLab,n); } } } } const map=new Map(); for(let y=0;y<height;y++){ for(let x=0;x<width;x++){ const idx=y*width+x; const l=labels[idx]; if(l===0) continue; const root=find(l); labels[idx]=root; let st=map.get(root); if(!st){ st={area:0,minx:x,miny:y,maxx:x,maxy:y}; map.set(root,st);} st.area++; if(x<st.minx) st.minx=x; if(y<st.miny) st.miny=y; if(x>st.maxx) st.maxx=x; if(y>st.maxy) st.maxy=y; } } return {labels,stats:map}; }
 
-function hueBucket(h){
-  if ((h>=330 && h<=360) || (h>=0 && h<=20)) return 'Red';
-  if (h>=40 && h<=75) return 'Yellow';
-  if (h>=80 && h<=160) return 'Green';
-  if (h>=190 && h<=260) return 'Blue';
-  if (h>=270 && h<=310) return 'Purple';
-  return 'Etc';
-}
-
-// Connected components labeling on binary mask
-function connectedComponents(mask, width, height){
-  const labels = new Int32Array(width*height);
-  let current = 1; const uf = [];
-  function find(x){ while(uf[x]>0) x=uf[x]; return x; }
-  function union(a,b){ a=find(a); b=find(b); if(a!==b) uf[b]=a; }
-
-  // First pass
-  for(let y=0;y<height;y++){
-    for(let x=0;x<width;x++){
-      const idx=y*width+x; if(!mask[idx]) continue;
-      const neighbors=[];
-      if(x>0 && mask[idx-1]) neighbors.push(labels[idx-1]); // left
-      if(y>0){
-        if(mask[idx-width]) neighbors.push(labels[idx-width]); // up
-        if(x>0 && mask[idx-width-1]) neighbors.push(labels[idx-width-1]); // up-left
-        if(x<width-1 && mask[idx-width+1]) neighbors.push(labels[idx-width+1]); // up-right
-      }
-      if(neighbors.length===0){ labels[idx]=current; uf[current]=0; current++; }
-      else {
-        const minLab = Math.min(...neighbors.filter(v=>v>0));
-        labels[idx]=minLab;
-        for(const n of neighbors){ if(n>0 && n!==minLab) union(minLab,n); }
-      }
-    }
-  }
-  // Second pass: resolve unions & collect stats
-  const map = new Map(); // lab -> {area,minx,miny,maxx,maxy,sumH,sumS,sumV}
-  for(let y=0;y<height;y++){
-    for(let x=0;x<width;x++){
-      const idx=y*width+x; const l=labels[idx];
-      if(l===0) continue; const root=find(l); labels[idx]=root;
-      let st = map.get(root);
-      if(!st){ st={area:0,minx:x,miny:y,maxx:x,maxy:y,sumH:0,sumS:0,sumV:0}; map.set(root,st); }
-      st.area++;
-      if(x<st.minx) st.minx=x; if(y<st.miny) st.miny=y;
-      if(x>st.maxx) st.maxx=x; if(y>st.maxy) st.maxy=y;
-    }
-  }
-  return {labels, stats: map};
-}
-
-function detect(imageData){
-  const sMin = Number(els.sMin.value)/100; const vMin = Number(els.vMin.value)/100;
-  const minArea = Number(els.minArea.value), maxArea = Number(els.maxArea.value);
-  const d = imageData.data; const N = W*H;
-  const mask = new Uint8Array(N);
-  const hsvBuf = new Float32Array(N*3);
-  for(let i=0, p=0;i<d.length;i+=4, p++){
-    const r=d[i]/255, g=d[i+1]/255, b=d[i+2]/255;
-    const [h,s,v]=rgb2hsv(r,g,b);
-    hsvBuf[p*3]=h; hsvBuf[p*3+1]=s; hsvBuf[p*3+2]=v;
-    // simple threshold: saturate and bright pixels -> likely pill against muted tray
-    mask[p]=(s>=sMin && v>=vMin) ? 1 : 0;
-  }
-
-  const {stats}=connectedComponents(mask, W, H);
+// Auto detect without sliders
+function autoDetect(imageData){
+  const d=imageData.data; const N=W*H; const sArr=new Float32Array(N); const vArr=new Float32Array(N);
+  for(let i=0,p=0;i<d.length;i+=4,p++){ const r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255; const [h,s,v]=rgb2hsv(r,g,b); sArr[p]=s; vArr[p]=v; }
+  const sT = percentile(sArr, 60)*0.9; const vT = percentile(vArr, 35);
+  const mask=new Uint8Array(N); for(let p=0;p<N;p++){ mask[p]=(sArr[p]>=sT && vArr[p]>=vT)?1:0; }
+  const closed=closeMask(mask,W,H);
+  const {stats}=connectedComponents(closed,W,H);
+  const minArea = Math.max(120, Math.floor((W*H)*0.00006));
+  const maxArea = Math.floor((W*H)*0.02);
   const results=[];
-  stats.forEach((st,lab)=>{
-    const area=st.area; if(area<minArea || area>maxArea) return;
-    const bbox=[st.minx, st.miny, st.maxx-st.minx+1, st.maxy-st.miny+1];
-    // mean hue: sample center
-    const cx=Math.round(st.minx+(st.maxx-st.minx)/2), cy=Math.round(st.miny+(st.maxy-st.miny)/2);
-    const off=(cy*W+cx)*3; const hue=hsvBuf[off];
-    results.push({bbox, hue, area});
-  });
-  // sort left->right, top->bottom for stable numbering
+  for(const st of stats.values()){
+    const area=st.area; if(area<minArea||area>maxArea) continue;
+    const bw=st.maxx-st.minx+1, bh=st.maxy-st.miny+1; const ar=bw/Math.max(1,bh); if(ar<0.35||ar>3.0) continue;
+    const bbox=[st.minx,st.miny,bw,bh];
+    const cx=Math.round(st.minx+bw/2), cy=Math.round(st.miny+bh/2); const off=(cy*W+cx)*4; const r=d[off]/255,g=d[off+1]/255,b=d[off+2]/255; const [hue]=rgb2hsv(r,g,b);
+    results.push({bbox,hue,area,include:true});
+  }
   results.sort((a,b)=> (a.bbox[1]-b.bbox[1]) || (a.bbox[0]-b.bbox[0]));
   return results;
 }
 
 function drawOverlay(imageData, dets, stampTotal=true){
   overlayCtx.clearRect(0,0,W,H);
-  if(imageData){
-    // draw background frame
-    const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(imageData,0,0);
-    overlayCtx.drawImage(tmp,0,0);
-  }
-  // boxes
-  overlayCtx.lineWidth=3; overlayCtx.strokeStyle='#ffffff';
-  overlayCtx.fillStyle='#000000';
-  overlayCtx.font='bold 22px system-ui, -apple-system, Segoe UI, Roboto';
+  if(imageData){ const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(imageData,0,0); overlayCtx.drawImage(tmp,0,0); }
+  overlayCtx.lineWidth=3; overlayCtx.font='bold 22px system-ui, -apple-system, Segoe UI, Roboto';
   dets.forEach((d,i)=>{
-    const [x,y,w,h]=d.bbox; overlayCtx.strokeRect(x,y,w,h);
-    // index label
-    overlayCtx.fillStyle='rgba(0,0,0,.65)'; overlayCtx.fillRect(x, y-24, 30, 22);
-    overlayCtx.fillStyle='#ffffff'; overlayCtx.fillText(String(i+1), x+6, y-6);
-    // every 5 → ✓
-    if(((i+1)%5)===0){ overlayCtx.fillStyle='#10b981'; overlayCtx.fillText('✓', x+w-18, y-6); }
+    const [x,y,w,h]=d.bbox; overlayCtx.strokeStyle = d.include ? '#ffffff' : '#ef4444'; overlayCtx.globalAlpha=d.include?1.0:0.4; overlayCtx.strokeRect(x,y,w,h); overlayCtx.globalAlpha=1.0;
+    overlayCtx.fillStyle='rgba(0,0,0,.65)'; overlayCtx.fillRect(x, y-24, 30, 22); overlayCtx.fillStyle='#ffffff'; overlayCtx.fillText(String(i+1), x+6, y-6);
+    if(((i+1)%5)===0 && d.include){ overlayCtx.fillStyle='#10b981'; overlayCtx.fillText('✓', x+w-18, y-6); }
   });
-
-  if(stampTotal){
-    const total = dets.length; els.totalBadge.textContent = `총 ${total}개`;
-    // badge
-    overlayCtx.fillStyle='rgba(0,0,0,.55)'; overlayCtx.fillRect(16,16,200,48);
-    overlayCtx.fillStyle='#fde68a'; overlayCtx.font='700 34px system-ui, -apple-system';
-    overlayCtx.fillText(`총 ${total}개`, 24, 50);
-  }
+  if(stampTotal){ const total=dets.filter(d=>d.include).length; els.totalBadge.textContent=`총 ${total}개`; overlayCtx.fillStyle='rgba(0,0,0,.55)'; overlayCtx.fillRect(16,16,220,48); overlayCtx.fillStyle='#fde68a'; overlayCtx.font='700 34px system-ui, -apple-system'; overlayCtx.fillText(`총 ${total}개`, 24, 50); }
 }
 
 function updateBucketCounts(){
-  const mode = els.colorMode.value; els.buckets.innerHTML='';
-  if(mode==='none') return;
-  const counts = {};
-  detections.forEach(d=>{ const name=hueBucket(d.hue); counts[name]=(counts[name]||0)+1; });
-  for(const k of Object.keys(counts)){
-    const tag=document.createElement('span'); tag.className='tag'; tag.textContent=`${k}: ${counts[k]}개`;
-    els.buckets.appendChild(tag);
-  }
+  els.buckets.innerHTML=''; const counts={}; detections.forEach(d=>{ if(!d.include) return; const name=hueBucket(d.hue); counts[name]=(counts[name]||0)+1; }); for(const k of Object.keys(counts)){ const tag=document.createElement('span'); tag.className='tag'; tag.textContent=`${k}: ${counts[k]}개`; els.buckets.appendChild(tag); }
 }
 
-// Actions
-els.btnShot.onclick = () => {
-  const frame = grabFrame();
-  if(!frame){ els.status.textContent='영상 프레임을 아직 가져올 수 없어요'; return; }
-  capturedImage = frame;
-  detections = detect(capturedImage);
-  drawOverlay(capturedImage, detections);
-  updateBucketCounts();
-  els.status.textContent = `검출: ${detections.length}개`;
+// Smart one-tap flow
+els.btnSmart.onclick = () => {
+  const frame = grabFrame(); if(!frame){ els.status.textContent='영상 프레임을 아직 가져올 수 없어요'; return; }
+  capturedImage = frame; detections = autoDetect(capturedImage);
+  drawOverlay(capturedImage, detections); updateBucketCounts(); els.status.textContent = `검출: ${detections.filter(d=>d.include).length}개`;
 };
 
-els.btnRecount.onclick = () => {
-  if(!capturedImage){ els.status.textContent='먼저 촬영하세요'; return; }
-  detections = detect(capturedImage);
-  drawOverlay(capturedImage, detections);
-  updateBucketCounts();
-};
-
-els.btnMinus.onclick = () => { if(detections.length>0){ detections.pop(); drawOverlay(capturedImage, detections); updateBucketCounts(); } };
-els.btnPlus.onclick = () => { if(capturedImage){ // add a fake count marker (no bbox)
-  // create a tiny off-screen box at bottom-right corner for visual parity
-  detections.push({bbox:[W-40, H-60, 32, 32], hue:0, area:1024});
-  drawOverlay(capturedImage, detections); updateBucketCounts();
-} };
+els.btnReset.onclick = () => { capturedImage=null; detections=[]; overlayCtx.clearRect(0,0,W,H); els.totalBadge.textContent='총 0개'; els.status.textContent=''; els.buckets.innerHTML=''; };
 
 els.btnSave.onclick = () => {
-  if(!capturedImage){ els.status.textContent='먼저 촬영하세요'; return; }
-  // compose final image (frame + overlay + footer stamp)
+  if(!capturedImage){ els.status.textContent='먼저 스마트 카운트를 실행하세요'; return; }
+  const included = detections.filter(d=>d.include);
   const out=document.createElement('canvas'); out.width=W; out.height=H; const octx=out.getContext('2d');
-  const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(capturedImage,0,0);
-  octx.drawImage(tmp,0,0);
-  // redraw boxes & labels on out
-  drawOverlay(null, detections, true); // draws on overlay canvas
-  octx.drawImage(els.overlay,0,0);
-  // footer stamp
-  const name = els.patient.value.trim() || '이름미입력';
-  const now = new Date();
-  const stamp = now.toLocaleString('ko-KR', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  octx.fillStyle='rgba(0,0,0,.55)'; octx.fillRect(16, H-60, W-32, 44);
-  octx.font='600 24px system-ui, -apple-system'; octx.fillStyle='#ffffff';
-  octx.fillText(`${stamp} | ${name}`, 24, H-30);
-
-  // download as PNG
-  out.toBlob(b=>{
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(b);
-    const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0'); const d=String(now.getDate()).padStart(2,'0');
-    const hh=String(now.getHours()).padStart(2,'0'); const mm=String(now.getMinutes()).padStart(2,'0');
-    a.download=`${y}-${m}-${d}_${hh}-${mm}_${name}_캡슐-${detections.length}.png`;
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
-    els.status.textContent='PNG 저장됨 (iOS: 공유→사진 저장)';
-  }, 'image/png');
+  const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(capturedImage,0,0); octx.drawImage(tmp,0,0);
+  drawOverlay(null, included, true); octx.drawImage(els.overlay,0,0);
+  const name = els.patient.value.trim() || '이름미입력'; const now = new Date(); const stamp = now.toLocaleString('ko-KR', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  octx.fillStyle='rgba(0,0,0,.55)'; octx.fillRect(16, H-60, W-32, 44); octx.font='600 24px system-ui, -apple-system'; octx.fillStyle='#ffffff'; octx.fillText(`${stamp} | ${name}`, 24, H-30);
+  out.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0'); const d=String(now.getDate()).padStart(2,'0'); const hh=String(now.getHours()).padStart(2,'0'); const mm=String(now.getMinutes()).padStart(2,'0'); a.download=`${y}-${m}-${d}_${hh}-${mm}_${name}_캡슐-${included.length}.png`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href); els.status.textContent='PNG 저장됨 (iOS: 공유→사진 저장)'; }, 'image/png');
 };
 
-// UI bindings
-['sMin','vMin'].forEach(id=>{
-  const el=els[id]; const label=els[id+'Val'];
-  el.addEventListener('input',()=>{ label.textContent=el.value; if(capturedImage){ detections = detect(capturedImage); drawOverlay(capturedImage, detections); updateBucketCounts(); } });
+// Tap to toggle include/exclude
+els.overlay.addEventListener('click', (e)=>{
+  if(!capturedImage || detections.length===0) return;
+  const rect = els.overlay.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (W / rect.width);
+  const y = (e.clientY - rect.top) * (H / rect.height);
+  for(let i=detections.length-1;i>=0;i--){ const [bx,by,bw,bh]=detections[i].bbox; if(x>=bx && x<=bx+bw && y>=by && y<=by+bh){ detections[i].include = !detections[i].include; drawOverlay(capturedImage, detections); updateBucketCounts(); break; } }
 });
-['minArea','maxArea','colorMode'].forEach(id=>{
-  const el=els[id]; el.addEventListener('change',()=>{ if(capturedImage){ detections = detect(capturedImage); drawOverlay(capturedImage, detections); updateBucketCounts(); } });
-});
+
+// Advanced bindings (optional)
+['sMin','vMin'].forEach(id=>{ const el=els[id]; const label=els[id+'Val']; if(!el) return; el.addEventListener('input',()=>{ label.textContent=el.value; if(capturedImage){ detections = autoDetect(capturedImage); drawOverlay(capturedImage, detections); updateBucketCounts(); } }); });
+['minArea','maxArea'].forEach(id=>{ const el=els[id]; if(!el) return; el.addEventListener('change',()=>{ if(capturedImage){ detections = autoDetect(capturedImage); drawOverlay(capturedImage, detections); updateBucketCounts(); } }); });
 </script>
 </body>
 </html>
