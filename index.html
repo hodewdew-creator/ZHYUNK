@@ -3,200 +3,142 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PillCounter – Web Prototype v3</title>
+  <title>PillCounter – Web Prototype v3.2</title>
   <style>
-    :root { --bg:#0b0d10; --panel:#12161b; --muted:#9aa4b2; }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:#e5e7eb;font-family:-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, Apple SD Gothic Neo, Noto Sans CJK KR, sans-serif}
-    header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(11,13,16,.9),rgba(11,13,16,.6));backdrop-filter:blur(8px);}
-    .wrap{max-width:1100px;margin:0 auto;padding:12px 16px}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    .title{font-weight:800;font-size:20px}
-    .badge{padding:6px 10px;border-radius:12px;background:#0e1b17;border:1px solid #1f3a33;color:#ccfbf1;font-weight:700}
-    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:14px;padding:12px}
-    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-    input[type="text"]{background:#0f141a;border:1px solid #233042;border-radius:10px;color:#e5e7eb;padding:10px 12px}
-    select{background:#0f141a;border:1px solid #233042;border-radius:10px;color:#e5e7eb;padding:10px 12px}
-    button{cursor:pointer;background:#111827;border:1px solid #253041;color:#e5e7eb;border-radius:12px;padding:10px 14px;font-weight:700}
-    button.primary{background:#0f766e;border-color:#115e59}
-    button.ghost{background:#0f141a}
-    .stage{position:relative;aspect-ratio:3/4;background:#0e1116;border-radius:16px;overflow:hidden;border:1px solid #1f2937}
-    video, canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-    .hint{color:var(--muted);font-size:12px}
-    .stack{display:grid;gap:10px}
-    .grid{display:grid;gap:12px;grid-template-columns:1fr;}
-    @media(min-width:980px){ .grid{grid-template-columns:1.2fr .8fr} }
-    .footer{color:#94a3b8;font-size:12px;text-align:center;padding:18px}
+    body{margin:0;background:#f9fafb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{padding:14px;background:#2563eb;color:white;position:sticky;top:0;z-index:10;}
+    header h1{margin:0;font-size:20px;font-weight:700;}
+    .stage{position:relative;aspect-ratio:3/4;background:#e5e7eb;overflow:hidden}
+    video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:#f3f4f6}
+    .controls input{flex:1;padding:8px;border-radius:6px;border:1px solid #d1d5db;background:white;color:#111827}
+    .controls button{flex:1;padding:10px;border:none;border-radius:6px;background:#2563eb;color:white;font-weight:600;cursor:pointer}
+    .controls button.secondary{background:#6b7280}
+    .badge{position:absolute;top:16px;left:16px;background:rgba(37,99,235,.9);padding:6px 12px;border-radius:8px;font-weight:700;color:white;font-size:18px}
+    .status{padding:10px;text-align:center;font-size:13px;color:#374151}
   </style>
 </head>
 <body>
-  <header>
-    <div class="wrap row">
-      <div class="title">💊 PillCounter – Web Prototype v3</div>
-      <div class="badge" id="totalBadge">총 0개</div>
-      <div class="hint">노이즈 억제 강화: 면적 적응 + 비율 + 에지밀도</div>
-    </div>
-  </header>
+<header><h1>💊 PillCounter – Web Prototype v3.2</h1></header>
 
-  <main class="wrap" style="margin-top:10px">
-    <section class="stack">
-      <div class="stage" id="stage">
-        <video id="video" autoplay playsinline muted></video>
-        <canvas id="overlay"></canvas>
-      </div>
-
-      <div class="panel">
-        <div class="controls">
-          <div class="hint">이름</div>
-          <input id="patient" type="text" placeholder="고양이이름" value="고양이이름" />
-          <button id="btnStart" class="primary">카메라 시작</button>
-          <button id="btnSmart" class="primary">스마트 카운트</button>
-          <button id="btnSave">PNG 저장</button>
-          <button id="btnReset" class="ghost">초기화</button>
-          <div class="hint">정확도</div>
-          <select id="mode">
-            <option value="standard" selected>표준</option>
-            <option value="conservative">보수적(노이즈 억제↑)</option>
-            <option value="aggressive">공격적(감지↑)</option>
-          </select>
-          <span id="status" class="hint"></span>
-        </div>
-      </div>
-
-      <div class="panel">
-        <strong>사용법</strong>
-        <ul class="hint" style="margin:6px 0 0 18px">
-          <li>스마트 카운트 → 틀린 박스는 캔버스를 탭 해서 제외/포함</li>
-          <li>배경 질감/반사 노이즈가 심하면 <b>보수적</b> 모드로</li>
-          <li>저장 시, 상단 총합과 이름/시간 스탬프가 이미지에 찍혀서 저장</li>
-        </ul>
-      </div>
-    </section>
-  </main>
-
-  <div class="footer">© PillCounter v3 – iOS는 공유 팝업에서 "사진에 저장"을 눌러 저장</div>
+<main>
+  <div class="stage">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <div id="totalBadge" class="badge">총 0개</div>
+  </div>
+  <div class="controls">
+    <input id="patient" type="text" placeholder="환자 이름 입력" />
+    <button id="btnStart">카메라 시작</button>
+    <button id="btnShot">스마트 카운트</button>
+    <button id="btnSave" class="secondary">저장</button>
+  </div>
+  <div class="status" id="status"></div>
+</main>
 
 <script>
 const els = {
   video: document.getElementById('video'),
   overlay: document.getElementById('overlay'),
   btnStart: document.getElementById('btnStart'),
-  btnSmart: document.getElementById('btnSmart'),
+  btnShot: document.getElementById('btnShot'),
   btnSave: document.getElementById('btnSave'),
-  btnReset: document.getElementById('btnReset'),
   totalBadge: document.getElementById('totalBadge'),
   status: document.getElementById('status'),
-  patient: document.getElementById('patient'),
-  mode: document.getElementById('mode'),
+  patient: document.getElementById('patient')
 };
 
-let stream = null;
-let capturedImage = null; // ImageData of last shot
-let detections = []; // {bbox:[x,y,w,h], hue, area, include:true}
+let stream=null, capturedImage=null, detections=[];
+const W=720,H=960; const ctx=els.overlay.getContext('2d');
+els.overlay.width=W; els.overlay.height=H;
 
-const W = 720; const H = 960; // portrait; scales to device via CSS
-const overlayCtx = els.overlay.getContext('2d');
-function fitCanvas(){ els.overlay.width=W; els.overlay.height=H; }
-fitCanvas();
-
-// Camera
-els.btnStart.onclick = async () => {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: {ideal: 1280}, height: {ideal: 720} }, audio:false });
-    els.video.srcObject = stream; els.status.textContent = '카메라 시작됨';
-  } catch (e) { console.error(e); els.status.textContent = '카메라 접근 실패: 권한을 확인하세요'; }
+els.btnStart.onclick=async()=>{
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
+    els.video.srcObject=stream;
+    els.status.textContent='카메라 시작됨';
+  }catch(e){els.status.textContent='카메라 접근 실패';}
 };
 
 function grabFrame(){
-  const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H; const tctx = tmp.getContext('2d');
-  const vw = els.video.videoWidth, vh = els.video.videoHeight; if(!vw||!vh) return null;
+  const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H;
+  const tctx=tmp.getContext('2d');
+  const vw=els.video.videoWidth,vh=els.video.videoHeight;
+  if(!vw||!vh) return null;
   const targetAR=W/H, videoAR=vw/vh; let dw,dh,dx,dy;
-  if(videoAR>targetAR){ dh=H; dw=H*videoAR; dx=(W-dw)/2; dy=0; } else { dw=W; dh=W/videoAR; dx=0; dy=(H-dh)/2; }
-  tctx.drawImage(els.video, dx, dy, dw, dh);
+  if(videoAR>targetAR){ dh=H; dw=H*videoAR; dx=(W-dw)/2; dy=0; }
+  else { dw=W; dh=W/videoAR; dx=0; dy=(H-dh)/2; }
+  tctx.drawImage(els.video,dx,dy,dw,dh);
   return tctx.getImageData(0,0,W,H);
 }
 
-// Utils
-function rgb2hsv(r,g,b){ const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn; let h=0; if(d!==0){ if(mx===r){h=((g-b)/d)%6;} else if(mx===g){h=((b-r)/d)+2;} else {h=((r-g)/d)+4;} h*=60; if(h<0) h+=360; } const s = mx===0 ? 0 : d/mx; const v = mx; return [h,s,v]; }
-function percentile(arr, p){ if(arr.length===0) return 0; const k=Math.min(arr.length-1, Math.max(0, Math.floor((p/100)*arr.length))); const copy=Array.from(arr).sort((a,b)=>a-b); return copy[k]; }
-function median(arr){ if(arr.length===0) return 0; const s=Array.from(arr).sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2? s[m] : (s[m-1]+s[m])/2; }
+function rgb2hsv(r,g,b){
+  r/=255; g/=255; b/=255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn; let h=0;
+  if(d!==0){ if(mx===r) h=((g-b)/d)%6; else if(mx===g) h=((b-r)/d)+2; else h=((r-g)/d)+4; h*=60; if(h<0) h+=360; }
+  const s=mx===0?0:d/mx; const v=mx; return [h,s,v];
+}
+function percentile(arr, p){ if(arr.length===0) return 0; const copy=Array.from(arr).sort((a,b)=>a-b); const k=Math.min(copy.length-1, Math.max(0, Math.floor((p/100)*copy.length))); return copy[k]; }
 function closeMask(mask,w,h){ const tmp=new Uint8Array(mask.length); for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let on=0; for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(mask[(y+dy)*w+(x+dx)]){on=1;break;} } if(on)break; } tmp[y*w+x]=on; } } const out=new Uint8Array(mask.length); for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let all=1; for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(!tmp[(y+dy)*w+(x+dx)]){all=0;break;} } if(!all)break; } out[y*w+x]=all; } } return out; }
-function connectedComponents(mask, width, height){ const labels=new Int32Array(width*height); let current=1; const uf=[]; function find(x){ while(uf[x]>0) x=uf[x]; return x; } function union(a,b){ a=find(a); b=find(b); if(a!==b) uf[b]=a; } for(let y=0;y<height;y++){ for(let x=0;x<width;x++){ const idx=y*width+x; if(!mask[idx]) continue; const neighbors=[]; if(x>0&&mask[idx-1]) neighbors.push(labels[idx-1]); if(y>0){ if(mask[idx-width]) neighbors.push(labels[idx-width]); if(x>0&&mask[idx-width-1]) neighbors.push(labels[idx-width-1]); if(x<width-1&&mask[idx-width+1]) neighbors.push(labels[idx-width+1]); } if(neighbors.length===0){ labels[idx]=current; uf[current]=0; current++; } else { const minLab=Math.min(...neighbors.filter(v=>v>0)); labels[idx]=minLab; for(const n of neighbors){ if(n>0&&n!==minLab) union(minLab,n); } } } } const map=new Map(); for(let y=0;y<height;y++){ for(let x=0;x<width;x++){ const idx=y*width+x; const l=labels[idx]; if(l===0) continue; const root=find(l); labels[idx]=root; let st=map.get(root); if(!st){ st={area:0,minx:x,miny:y,maxx:x,maxy:y}; map.set(root,st);} st.area++; if(x<st.minx) st.minx=x; if(y<st.miny) st.miny=y; if(x>st.maxx) st.maxx=x; if(y>st.maxy) st.maxy=y; } } return {labels,stats:map}; }
-function sobelEdgeMap(imageData){ const g=new Uint8ClampedArray(W*H); const d=imageData.data; function gray(i){ return (0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]); } for(let y=1;y<H-1;y++){ for(let x=1;x<W-1;x++){ const i=(y*W+x)*4; const gx= gray(i-4-W*4) + 2*gray(i-4) + gray(i-4+W*4) - (gray(i+4-W*4) + 2*gray(i+4) + gray(i+4+W*4)); const gy= gray(i-4-W*4) + 2*gray(i-W*4) + gray(i+4-W*4) - (gray(i-4+W*4) + 2*gray(i+W*4) + gray(i+4+W*4)); const mag=Math.sqrt(gx*gx+gy*gy); g[y*W+x]= mag>180 ? 1 : 0; } } return g; }
 
-function getMode(){ const m=(els.mode?.value)||'standard'; if(m==='conservative') return {areaMinK:0.6, areaMaxK:2.2, edgeThr:0.03}; if(m==='aggressive') return {areaMinK:0.25, areaMaxK:4.0, edgeThr:0.012}; return {areaMinK:0.4, areaMaxK:3.0, edgeThr:0.02}; }
-
-// Auto detect (noise-robust)
-function autoDetect(imageData){
-  const d=imageData.data; const N=W*H; const sArr=new Float32Array(N); const vArr=new Float32Array(N);
-  for(let i=0,p=0;i<d.length;i+=4,p++){ const r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255; const [h,s,v]=rgb2hsv(r,g,b); sArr[p]=s; vArr[p]=v; }
-  const sT = percentile(sArr, 60)*0.9; const vT = percentile(vArr, 35);
+function detectPills(img){
+  const d=img.data,N=W*H; const sArr=new Float32Array(N), vArr=new Float32Array(N);
+  for(let i=0,p=0;i<d.length;i+=4,p++){ const [h,s,v]=rgb2hsv(d[i],d[i+1],d[i+2]); sArr[p]=s; vArr[p]=v; }
+  const sT=percentile(sArr,60)*0.9; const vT=percentile(vArr,35);
   const mask=new Uint8Array(N); for(let p=0;p<N;p++){ mask[p]=(sArr[p]>=sT && vArr[p]>=vT)?1:0; }
   const closed=closeMask(mask,W,H);
-  const {stats}=connectedComponents(closed,W,H);
-
-  // Candidate list + areas
-  const candidates=[]; const rectAreas=[];
-  for(const st of stats.values()){
-    const bw=st.maxx-st.minx+1, bh=st.maxy-st.miny+1; const rectArea=bw*bh; rectAreas.push(rectArea);
-    const bbox=[st.minx,st.miny,bw,bh]; const cx=Math.round(st.minx+bw/2), cy=Math.round(st.miny+bh/2); const off=(cy*W+cx)*4; const r=d[off]/255,g=d[off+1]/255,b=d[off+2]/255; const [hue]=rgb2hsv(r,g,b);
-    candidates.push({bbox,hue,rectArea,blobArea:st.area});
-  }
-  if(candidates.length===0) return [];
-  const medArea = Math.max(1, median(rectAreas));
-  const mode = getMode();
-
-  // Edges
-  const edges = sobelEdgeMap(imageData);
-  function edgeDensity(bx,by,bw,bh){ let cnt=0; for(let y=by;y<by+bh;y++){ for(let x=bx;x<bx+bw;x++){ if(edges[y*W+x]) cnt++; } } return cnt/(bw*bh); }
-
-  const results=[];
-  for(const c of candidates){
-    const [x,y,w,h]=c.bbox; const ar=w/Math.max(1,h); if(ar<0.35||ar>3.0) continue; // pill-ish
-    const fill = c.blobArea/Math.max(1,c.rectArea); if(fill<0.32) continue; // dense enough
-    if(c.rectArea < Math.max(180, medArea*mode.areaMinK)) continue; // too small
-    if(c.rectArea > Math.max(900, medArea*mode.areaMaxK)) continue; // too big
-    const ed = edgeDensity(x,y,w,h); if(ed < mode.edgeThr) continue; // not enough edges
-    results.push({bbox:[x,y,w,h], hue:c.hue, area:c.blobArea, include:true});
-  }
-  results.sort((a,b)=> (a.bbox[1]-b.bbox[1]) || (a.bbox[0]-b.bbox[0]));
-  return results;
+  // Connected components
+  const labels=new Int32Array(W*H); let current=1; const uf=[]; function find(x){ while(uf[x]>0) x=uf[x]; return x; } function union(a,b){ a=find(a); b=find(b); if(a!==b) uf[b]=a; }
+  for(let y=0;y<H;y++){ for(let x=0;x<W;x++){ const idx=y*W+x; if(!closed[idx]) continue; const neighbors=[]; if(x>0&&closed[idx-1]) neighbors.push(labels[idx-1]); if(y>0){ if(closed[idx-W]) neighbors.push(labels[idx-W]); if(x>0&&closed[idx-W-1]) neighbors.push(labels[idx-W-1]); if(x<W-1&&closed[idx-W+1]) neighbors.push(labels[idx-W+1]); } if(neighbors.length===0){ labels[idx]=current; uf[current]=0; current++; } else { const minLab=Math.min(...neighbors.filter(v=>v>0)); labels[idx]=minLab; for(const n of neighbors){ if(n>0&&n!==minLab) union(minLab,n); } } } }
+  const stats=new Map(); for(let y=0;y<H;y++){ for(let x=0;x<W;x++){ const idx=y*W+x; const l=find(labels[idx]); if(!l) continue; labels[idx]=l; let st=stats.get(l); if(!st){ st={area:0,minx:x,miny:y,maxx:x,maxy:y}; stats.set(l,st);} st.area++; if(x<st.minx) st.minx=x; if(y<st.miny) st.miny=y; if(x>st.maxx) st.maxx=x; if(y>st.maxy) st.maxy=y; } }
+  const minArea=Math.max(120, Math.floor((W*H)*0.00006)); const maxArea=Math.floor((W*H)*0.02);
+  const results=[]; stats.forEach(st=>{ const area=st.area; if(area<minArea||area>maxArea) return; const w=st.maxx-st.minx+1,h=st.maxy-st.miny+1; const ar=w/Math.max(1,h); if(ar<0.35||ar>3.0) return; results.push({bbox:[st.minx,st.miny,w,h],include:true}); });
+  results.sort((a,b)=> (a.bbox[1]-b.bbox[1]) || (a.bbox[0]-b.bbox[0])); return results;
 }
 
-function drawOverlay(imageData, dets, stampTotal=true){
-  overlayCtx.clearRect(0,0,W,H);
-  if(imageData){ const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(imageData,0,0); overlayCtx.drawImage(tmp,0,0); }
-  overlayCtx.lineWidth=3; overlayCtx.font='bold 22px system-ui, -apple-system, Segoe UI, Roboto';
-  dets.forEach((d,i)=>{ const [x,y,w,h]=d.bbox; overlayCtx.strokeStyle = d.include ? '#ffffff' : '#ef4444'; overlayCtx.globalAlpha=d.include?1.0:0.4; overlayCtx.strokeRect(x,y,w,h); overlayCtx.globalAlpha=1.0; overlayCtx.fillStyle='rgba(0,0,0,.65)'; overlayCtx.fillRect(x, y-24, 30, 22); overlayCtx.fillStyle='#ffffff'; overlayCtx.fillText(String(i+1), x+6, y-6); if(((i+1)%5)===0 && d.include){ overlayCtx.fillStyle='#10b981'; overlayCtx.fillText('✓', x+w-18, y-6); } });
-  if(stampTotal){ const total=dets.filter(d=>d.include).length; els.totalBadge.textContent=`총 ${total}개`; overlayCtx.fillStyle='rgba(0,0,0,.55)'; overlayCtx.fillRect(16,16,220,48); overlayCtx.fillStyle='#fde68a'; overlayCtx.font='700 34px system-ui, -apple-system'; overlayCtx.fillText(`총 ${total}개`, 24, 50); }
+function drawOverlay(img,dets){
+  ctx.clearRect(0,0,W,H);
+  if(img){ const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(img,0,0); ctx.drawImage(tmp,0,0); }
+  ctx.lineWidth=3; ctx.font='bold 20px system-ui';
+  dets.forEach((d,i)=>{
+    const [x,y,w,h]=d.bbox;
+    ctx.strokeStyle=d.include?'#2563eb':'#ef4444';
+    ctx.globalAlpha=d.include?1.0:0.4;
+    ctx.strokeRect(x,y,w,h);
+    ctx.globalAlpha=1.0;
+    ctx.fillStyle='#111827'; ctx.fillText(i+1,x,y-6);
+    if(((i+1)%5)===0 && d.include){ ctx.fillStyle='#2563eb'; ctx.fillText('✓',x+w-16,y-6); }
+  });
+  const total=dets.filter(d=>d.include).length;
+  els.totalBadge.textContent=`총 ${total}개`;
 }
 
-function updateUI(){ drawOverlay(capturedImage, detections); }
+els.overlay.addEventListener('click',(e)=>{
+  if(!capturedImage||detections.length===0) return;
+  const r=els.overlay.getBoundingClientRect();
+  const x=(e.clientX-r.left)*(W/r.width), y=(e.clientY-r.top)*(H/r.height);
+  for(let i=detections.length-1;i>=0;i--){ const [bx,by,bw,bh]=detections[i].bbox; if(x>=bx&&x<=bx+bw&&y>=by&&y<=by+bh){ detections[i].include=!detections[i].include; drawOverlay(capturedImage,detections); break; } }
+});
 
-// Smart one-tap
-els.btnSmart.onclick = () => { const frame = grabFrame(); if(!frame){ els.status.textContent='영상 프레임을 아직 가져올 수 없어요'; return; } capturedImage = frame; detections = autoDetect(capturedImage); updateUI(); els.status.textContent = `검출: ${detections.filter(d=>d.include).length}개`; };
-
-els.btnReset.onclick = () => { capturedImage=null; detections=[]; overlayCtx.clearRect(0,0,W,H); els.totalBadge.textContent='총 0개'; els.status.textContent=''; };
-
-els.btnSave.onclick = () => {
-  if(!capturedImage){ els.status.textContent='먼저 스마트 카운트를 실행하세요'; return; }
-  const included = detections.filter(d=>d.include);
-  const out=document.createElement('canvas'); out.width=W; out.height=H; const octx=out.getContext('2d');
-  const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(capturedImage,0,0); octx.drawImage(tmp,0,0);
-  drawOverlay(null, included, true); octx.drawImage(els.overlay,0,0);
-  const name = els.patient.value.trim() || '이름미입력'; const now = new Date(); const stamp = now.toLocaleString('ko-KR', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  octx.fillStyle='rgba(0,0,0,.55)'; octx.fillRect(16, H-60, W-32, 44); octx.font='600 24px system-ui, -apple-system'; octx.fillStyle='#ffffff'; octx.fillText(`${stamp} | ${name}`, 24, H-30);
-  out.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); const y=now.getFullYear(); const m=String(now.getMonth()+1).padStart(2,'0'); const d=String(now.getDate()).padStart(2,'0'); const hh=String(now.getHours()).padStart(2,'0'); const mm=String(now.getMinutes()).padStart(2,'0'); a.download=`${y}-${m}-${d}_${hh}-${mm}_${name}_캡슐-${included.length}.png`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href); els.status.textContent='PNG 저장됨 (iOS: 공유→사진 저장)'; }, 'image/png');
+els.btnShot.onclick=()=>{
+  const frame=grabFrame(); if(!frame){els.status.textContent='영상 없음 (카메라 시작을 눌러주세요)'; return;}
+  capturedImage=frame; detections=detectPills(frame);
+  drawOverlay(frame,detections);
+  const n = detections.filter(d=>d.include).length;
+  els.status.textContent=`자동검출 완료 · 현재 ${n}개`;
 };
 
-// Tap to toggle include/exclude
-els.overlay.addEventListener('click', (e)=>{
-  if(!capturedImage || detections.length===0) return;
-  const rect = els.overlay.getBoundingClientRect();
-  const x = (e.clientX - rect.left) * (W / rect.width);
-  const y = (e.clientY - rect.top) * (H / rect.height);
-  for(let i=detections.length-1;i>=0;i--){ const [bx,by,bw,bh]=detections[i].bbox; if(x>=bx && x<=bx+bw && y>=by && y<=by+bh){ detections[i].include = !detections[i].include; updateUI(); break; } }
-});
+els.btnSave.onclick=()=>{
+  if(!capturedImage){els.status.textContent='먼저 스마트 카운트를 실행하세요';return;}
+  const included=detections.filter(d=>d.include);
+  const out=document.createElement('canvas'); out.width=W; out.height=H; const octx=out.getContext('2d');
+  const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(capturedImage,0,0); octx.drawImage(tmp,0,0);
+  drawOverlay(null,included); octx.drawImage(els.overlay,0,0);
+  const name=els.patient.value.trim()||'이름없음'; const now=new Date(); const stamp=now.toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  octx.fillStyle='rgba(0,0,0,.6)'; octx.fillRect(16,H-40,W-32,30);
+  octx.fillStyle='#fff'; octx.font='16px bold system-ui'; octx.fillText(`${stamp} | ${name}`,24,H-20);
+  out.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);const y=now.getFullYear();const m=String(now.getMonth()+1).padStart(2,'0');const d=String(now.getDate()).padStart(2,'0');const hh=String(now.getHours()).padStart(2,'0');const mm=String(now.getMinutes()).padStart(2,'0');a.download=`${y}-${m}-${d}_${hh}-${mm}_${name}_캡슐-${included.length}.png`;a.click();},'image/png');
+};
 </script>
 </body>
 </html>
