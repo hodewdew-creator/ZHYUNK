@@ -1,0 +1,46 @@
+좋은 질문이에요 👍
+GitHub root에 image.png 파일이 있다면, 웹앱을 홈 화면에 추가할 때 아이콘으로 쓰려면 HTML <head> 안에 manifest 관련 태그와 apple-touch-icon/meta를 넣어주면 됩니다.
+
+1. <head>에 직접 아이콘 지정
+<link rel="icon" href="image.png" type="image/png">
+<link rel="apple-touch-icon" href="image.png">
+<meta name="theme-color" content="#69b10d">
+
+
+rel="icon" → 브라우저 파비콘
+
+rel="apple-touch-icon" → iOS 사파리에서 홈화면 추가할 때 아이콘으로 사용됨
+
+theme-color → 안드로이드에서 홈 화면 추가 시 상단 바 색상 지정
+
+2. manifest.json 추가 (권장)
+
+PWA 형태로 설정하면 iOS/안드로이드 모두 잘 동작해요.
+프로젝트 루트에 manifest.json을 만들고:
+
+{
+  "name": "BPM Counter",
+  "short_name": "BPM",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#69b10d",
+  "icons": [
+    {
+      "src": "image.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
+
+그 다음 <head>에 연결:
+
+<link rel="manifest" href="manifest.json">
+
+3. 정리
+
+간단히 쓰려면 <link rel="apple-touch-icon" href="image.png"> 만 넣어도 iOS 홈화면 아이콘으로 잡혀요.
+
+안드로이드/PWA까지 지원하려면 manifest.json 방식까지 쓰는 게 제일 좋아요.
