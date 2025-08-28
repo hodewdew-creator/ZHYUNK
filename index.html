@@ -12,13 +12,16 @@
 
     /* Header */
     header{ position:sticky; top:0; background:#fff; border-bottom:1px solid var(--border); padding:10px 14px; z-index:20; }
-    .bar{ max-width:980px; margin:0 auto; display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; }
+    .bar{ max-width:980px; margin:0 auto; display:flex; gap:12px; align-items:flex-start; }
+    .logo{ flex-shrink:0; }
     h1{ margin:0; font-size:18px; font-weight:900; letter-spacing:.2px; }
     .repo{ font-size:12px; color:#475569 }
-    .tools{ display:flex; gap:8px; align-items:center; justify-self:end; }
+    .header-info{ flex:1; display:flex; flex-direction:column; gap:6px; }
+    .tools-top{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .tools-bottom{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
     /* Controls */
-    .input{ height:36px; padding:0 12px; border:1px solid var(--border); background:#fff; border-radius:10px; }
+    .input{ height:36px; padding:0 12px; border:1px solid var(--border); background:#fff; border-radius:10px; flex:1; min-width:140px; }
     .btn{ height:36px; padding:0 12px; border:1px solid var(--border); background:#fff; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; }
     .btn.primary{ background:var(--accent); color:#fff; border-color:transparent; }
     .btn.toggle[aria-pressed="true"]{ background:#111; color:#fff; border-color:#111; }
@@ -45,23 +48,22 @@
     body.titles-only .card.expanded .btns,
     body.titles-only .card.expanded .preview { display:block; }
     body.titles-only .card.expanded .name .chev{ transform: rotate(90deg); }
-
-    /* compact list mode (optional future) */
   </style>
 </head>
 <body>
   <header>
     <div class="bar">
-      <div>
-        <h1> <img src="icon.png" alt="icon" style="height:5em; vertical-align:middle;border-radius:12px;"> </h1>
+      <div class="logo"><img src="icon.png" alt="icon" style="height:5em; border-radius:12px;"></div>
+      <div class="header-info">
         <div class="repo" id="repoLabel"></div>
-      </div>
-      <div></div>
-      <div class="tools">
-        <input id="q" class="input" type="search" placeholder="파일 검색…" />
-        <button class="btn" id="refreshBtn" title="목록 새로고침">N</button>
-        <button class="btn toggle" id="titlesOnlyBtn" aria-pressed="false" title="제목만 보기 토글">Title</button>
-        <button class="btn ghost" id="expandAllBtn" style="display:none;" title="모두 펼치기/접기">모두 펼치기</button>
+        <div class="tools-top">
+          <input id="q" class="input" type="search" placeholder="파일 검색…" />
+        </div>
+        <div class="tools-bottom">
+          <button class="btn" id="refreshBtn" title="목록 새로고침">new</button>
+          <button class="btn toggle" id="titlesOnlyBtn" aria-pressed="false" title="제목만 보기 토글">Title</button>
+          <button class="btn ghost" id="expandAllBtn" style="display:none;" title="모두 펼치기/접기">모두 펼치기</button>
+        </div>
       </div>
     </div>
   </header>
@@ -75,15 +77,11 @@
   <footer>자동 목록 갱신 · GitHub Contents API 사용</footer>
 
 <script>
-/** ================= 설정 =================
- * 필요 시 아래 OWNER/REPO/BRANCH/DIR만 바꾸면 됩니다.
- */
-const OWNER  = "hodewdew-creator";  // ← 변경 가능
-const REPO   = "ZHYUNK";            // ← 변경 가능
-const BRANCH = "main";              // ← 변경 가능
-const DIR    = "";                  // 특정 폴더만 볼 땐 "notes" 등
+const OWNER  = "hodewdew-creator";
+const REPO   = "ZHYUNK";
+const BRANCH = "main";
+const DIR    = "";
 
-/** =============== 내부 로직 =============== **/
 const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(DIR)}?ref=${encodeURIComponent(BRANCH)}`;
 const repoLabel = document.getElementById('repoLabel');
 repoLabel.textContent = `${OWNER}/${REPO}@${BRANCH}${DIR ? " / "+DIR : ""}`;
@@ -98,7 +96,7 @@ const $expandAll = document.getElementById('expandAllBtn');
 
 let allFiles = [];
 let titlesOnly = false;
-let expandStateAll = false; // 제목만 모드에서 전체 펼치기 상태
+let expandStateAll = false;
 
 async function fetchTxtList(){
   $err.style.display = "none";
@@ -114,7 +112,6 @@ async function fetchTxtList(){
     const items = Array.isArray(data) ? data : [data];
     const txts = items.filter(x => x.type === "file" && x.name.toLowerCase().endsWith(".txt"));
 
-    // 이름 오름차순
     txts.sort((a,b)=> a.name.localeCompare(b.name, 'ko'));
     allFiles = txts;
     render(txts);
@@ -150,6 +147,10 @@ function render(files){
     const viewBtn = button("보기", "primary", async () => {
       const text = await fetchText(rawUrl);
       pre.textContent = firstLines(text, 2000);
+      if(titlesOnly && !card.classList.contains('expanded')){
+        card.classList.add('expanded');
+        updateChevrons();
+      }
     });
     const rawBtn = linkBtn("원본 열기", rawUrl);
     const ghBtn  = linkBtn("GitHub 보기", f.html_url);
@@ -159,10 +160,10 @@ function render(files){
     pre.className = "preview";
     pre.textContent = "미리보기를 누르면 내용이 보여요.";
 
-    // 제목만 모드에서 개별 펼치기
     name.addEventListener('click', ()=>{
       if(!titlesOnly) return;
       card.classList.toggle('expanded');
+      updateChevrons();
     });
 
     card.append(name, meta, btns, pre);
@@ -209,17 +210,14 @@ function escapeHtml(s){
   return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 }
 
-// 검색
 $q.addEventListener('input', ()=>{
   const q = $q.value.trim().toLowerCase();
   if(!q){ render(allFiles); return; }
   render(allFiles.filter(f => f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q)));
 });
 
-// 새로고침
 $refresh.addEventListener('click', fetchTxtList);
 
-// 제목만 보기 토글
 $titlesToggle.addEventListener('click', ()=>{
   titlesOnly = !titlesOnly;
   document.body.classList.toggle('titles-only', titlesOnly);
@@ -230,7 +228,6 @@ $titlesToggle.addEventListener('click', ()=>{
   updateChevrons();
 });
 
-// 모두 펼치기/접기 (제목만 모드에서만 노출)
 $expandAll.addEventListener('click', ()=>{
   if(!titlesOnly) return;
   expandStateAll = !expandStateAll;
@@ -242,7 +239,6 @@ $expandAll.addEventListener('click', ()=>{
 });
 
 function updateChevrons(){
-  // 제목만 모드일 때만 화살표 표시, 아니면 숨김
   document.querySelectorAll('.card .chev').forEach((el)=>{
     el.style.visibility = titlesOnly ? 'visible' : 'hidden';
     const expanded = el.closest('.card')?.classList.contains('expanded');
@@ -250,7 +246,6 @@ function updateChevrons(){
   });
 }
 
-// 초기 로드
 fetchTxtList();
 </script>
 </body>
