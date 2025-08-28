@@ -51,7 +51,7 @@
     body.titles-only .card.expanded .name .chev{ transform: rotate(90deg); }
   </style>
 </head>
-<body>
+<body class="titles-only">
   <header>
     <div class="bar">
       <div class="logo"><img src="icon.png" alt="icon" style="height:5em; border-radius:12px;"></div>
@@ -62,8 +62,8 @@
         </div>
         <div class="tools-bottom">
           <button class="btn" id="refreshBtn" title="목록 새로고침">new</button>
-          <button class="btn toggle" id="titlesOnlyBtn" aria-pressed="false" title="제목만 보기 토글">Title</button>
-          <button class="btn ghost" id="expandAllBtn" style="display:none;" title="모두 펼치기/접기">모두 펼치기</button>
+          <button class="btn toggle" id="titlesOnlyBtn" aria-pressed="true" title="제목만 보기 토글">Title</button>
+          <button class="btn ghost" id="expandAllBtn" style="display:inline-block;" title="모두 펼치기/접기">모두 펼치기</button>
         </div>
       </div>
     </div>
@@ -82,6 +82,7 @@ const OWNER  = "hodewdew-creator";
 const REPO   = "ZHYUNK";
 const BRANCH = "main";
 const DIR    = "";
+const GITHUB_TOKEN = ""; // private 레포면 토큰 입력
 
 const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(DIR)}?ref=${encodeURIComponent(BRANCH)}`;
 const repoLabel = document.getElementById('repoLabel');
@@ -96,7 +97,7 @@ const $titlesToggle = document.getElementById('titlesOnlyBtn');
 const $expandAll = document.getElementById('expandAllBtn');
 
 let allFiles = [];
-let titlesOnly = false;
+let titlesOnly = true; // 초기값을 true로 설정
 let expandStateAll = false;
 
 async function fetchTxtList(){
@@ -146,11 +147,15 @@ function render(files){
     btns.className = "btns";
     const rawUrl = f.download_url || rawUrlFromPath(f.path);
     const viewBtn = button("보기", "primary", async () => {
-      const text = await fetchText(rawUrl);
-      pre.textContent = firstLines(text, 2000);
-      if(titlesOnly && !card.classList.contains('expanded')){
-        card.classList.add('expanded');
-        updateChevrons();
+      try{
+        const text = await fetchTextSmart(rawUrl, f.path);
+        pre.textContent = firstLines(text, 2000);
+        if(titlesOnly && !card.classList.contains('expanded')){
+          card.classList.add('expanded');
+          updateChevrons();
+        }
+      }catch(err){
+        pre.textContent = `불러오기 실패: ${err?.message || err}`;
       }
     });
     const rawBtn = linkBtn("원본 열기", rawUrl);
@@ -196,6 +201,24 @@ async function fetchText(url){
   if(!res.ok) throw new Error("raw fetch error");
   return await res.text();
 }
+
+// 다운로드 URL이 실패할 경우 GitHub Contents API로 재시도 (private repo 대응)
+async function fetchTextSmart(rawUrl, path){
+  try{
+    return await fetchText(rawUrl);
+  }catch(_){
+    const api = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(BRANCH)}`;
+    const headers = { "Accept": "application/vnd.github+json" };
+    if(GITHUB_TOKEN) headers["Authorization"] = `Bearer ${GITHUB_TOKEN}`;
+    const r = await fetch(api, { headers });
+    if(!r.ok) throw new Error("github api fetch error");
+    const j = await r.json();
+    if(!j.content) throw new Error("no content field");
+    const decoded = atob(j.content.replace(/\n/g, ""));
+    return decoded;
+  }
+}
+
 function firstLines(str, maxChars){
   return (str.length > maxChars) ? str.slice(0,maxChars) + "\n…(이하 생략)" : str;
 }
