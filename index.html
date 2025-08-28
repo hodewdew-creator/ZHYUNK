@@ -3,51 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-  <title> ZHYUNK </title>
+  <title>TXT 런처</title>
   <meta name="theme-color" content="#69b10d">
   <style>
     :root { --accent:#69b10d; --card:#fff; --bg:#f8fafc; --border:#e5e7eb; }
     *{ box-sizing:border-box }
-    body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:#0f172a;}
+    body{ margin:0; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:#0f172a;}
     header{ position:sticky; top:0; background:#fff; border-bottom:1px solid var(--border); padding:12px 16px; display:flex; gap:12px; align-items:center; z-index:10;}
     h1{ margin:0; font-size:18px; font-weight:800;}
     .repo{ font-size:12px; color:#475569 }
-    .tools{ margin-left:auto; display:flex; gap:8px; align-items:center;}
+    .search{ margin-left:auto; display:flex; gap:8px; align-items:center;}
     .search input{ height:36px; padding:0 10px; border:1px solid var(--border); border-radius:10px; width:200px; }
-    .btn{ border:1px solid var(--border); background:#fff; border-radius:10px; padding:8px 10px; font-weight:700; font-size:13px; cursor:pointer;}
-    .btn.primary{ background:var(--accent); color:#fff; border-color:transparent; }
-    .btn.toggle[aria-pressed="true"]{ background:#111; color:#fff; border-color:#111; }
     main{ padding:14px; max-width:880px; margin:0 auto; }
     .list{ display:grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap:12px;}
     .card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px; }
     .name{ font-weight:800; font-size:14px; word-break:break-all;}
     .meta{ font-size:12px; color:#64748b; display:flex; gap:8px; flex-wrap:wrap;}
     .btns{ display:flex; gap:8px; flex-wrap:wrap;}
-    .preview{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; line-height:1.45; color:#111827; background:#f1f5f9; border:1px dashed #cbd5e1; border-radius:10px; padding:10px; max-height:160px; overflow:auto; white-space:pre-wrap; }
+    .btn{ border:1px solid var(--border); background:#fff; border-radius:10px; padding:8px 10px; font-weight:700; font-size:13px; cursor:pointer; }
+    .btn.primary{ background:var(--accent); color:#fff; border-color:transparent; }
+    .preview{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; line-height:1.45; color:#111827; background:#f1f5f9; border:1px dashed #cbd5e1; border-radius:10px; padding:10px; max-height:160px; overflow:auto; white-space:pre-wrap; }
     .empty, .error{ text-align:center; color:#475569; margin-top:32px; }
     footer{ padding:20px; text-align:center; color:#94a3b8; font-size:12px;}
-
-    /* —— 제목만 보기 모드 —— */
-    body.titles-only .card .meta,
-    body.titles-only .card .btns,
-    body.titles-only .card .preview { display:none; }
-    body.titles-only .card .name { cursor:pointer; }
-    body.titles-only .card.expanded .meta,
-    body.titles-only .card.expanded .btns,
-    body.titles-only .card.expanded .preview { display:block; }
   </style>
 </head>
 <body>
   <header>
     <h1>📁 TXT 런처</h1>
     <div class="repo" id="repoLabel"></div>
-
-    <div class="tools">
-      <div class="search">
-        <input id="q" type="search" placeholder="파일 검색…" />
-      </div>
-      <button class="btn" id="refreshBtn" title="목록 새로고침">새로고침</button>
-      <button class="btn toggle" id="titlesOnlyBtn" aria-pressed="false" title="제목만 보기 토글">제목만</button>
+    <div class="search">
+      <input id="q" type="search" placeholder="파일 검색…" />
+      <button class="btn" id="refreshBtn">새로고침</button>
     </div>
   </header>
 
@@ -63,8 +49,8 @@
 /** =============== 설정 =============== **/
 const OWNER  = "hodewdew-creator";
 const REPO   = "ZHYUNK";
-const BRANCH = "main";
-const DIR    = ""; // 루트
+const BRANCH = "main"; // 기본 브랜치
+const DIR    = "";     // 루트에서 txt만 가져오기
 
 /** =============== 내부 로직 =============== **/
 const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(DIR)}?ref=${encodeURIComponent(BRANCH)}`;
@@ -76,10 +62,8 @@ const $empty = document.getElementById('empty');
 const $err = document.getElementById('err');
 const $q = document.getElementById('q');
 const $refresh = document.getElementById('refreshBtn');
-const $titlesToggle = document.getElementById('titlesOnlyBtn');
 
 let allFiles = [];
-let titlesOnly = false;
 
 async function fetchTxtList(){
   $err.style.display = "none";
@@ -135,17 +119,12 @@ function render(files){
     });
     const rawBtn = linkBtn("원본 열기", rawUrl);
     const ghBtn  = linkBtn("GitHub 보기", f.html_url);
+
     btns.append(viewBtn, rawBtn, ghBtn);
 
     const pre = document.createElement('pre');
     pre.className = "preview";
     pre.textContent = "미리보기를 누르면 내용이 보여요.";
-
-    // 제목만 모드일 때 제목 클릭으로 개별 접기/펼치기
-    name.addEventListener('click', ()=>{
-      if(!titlesOnly) return;
-      card.classList.toggle('expanded');
-    });
 
     card.append(name, meta, btns, pre);
     $list.appendChild(card);
@@ -185,26 +164,13 @@ function rawUrlFromPath(path){
   return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodeURIComponent(path).replace(/%2F/g,'/')}`;
 }
 
-// 검색
 $q.addEventListener('input', ()=>{
   const q = $q.value.trim().toLowerCase();
   if(!q){ render(allFiles); return; }
   render(allFiles.filter(f => f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q)));
 });
 
-// 새로고침
 $refresh.addEventListener('click', fetchTxtList);
-
-// 제목만 보기 토글
-$titlesToggle.addEventListener('click', ()=>{
-  titlesOnly = !titlesOnly;
-  document.body.classList.toggle('titles-only', titlesOnly);
-  $titlesToggle.setAttribute('aria-pressed', String(titlesOnly));
-  // 제목만 모드 켜질 때는 모두 접힘 상태(기본), 끄면 확장 클래스 제거
-  if(!titlesOnly){
-    document.querySelectorAll('.card.expanded').forEach(el=> el.classList.remove('expanded'));
-  }
-});
 
 fetchTxtList();
 </script>
