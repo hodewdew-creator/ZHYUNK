@@ -2,197 +2,177 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PillCounter – Web Prototype v3.4</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>TXT 런처</title>
+  <meta name="theme-color" content="#69b10d">
   <style>
-    body{margin:0;background:#f9fafb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    header{padding:14px;background:#2563eb;color:white;position:sticky;top:0;z-index:10;}
-    header h1{margin:0;font-size:20px;font-weight:700;}
-    .stage{position:relative;aspect-ratio:3/4;background:#e5e7eb;overflow:hidden}
-    video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-    .controls{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:#f3f4f6}
-    .controls input{flex:1;padding:8px;border-radius:6px;border:1px solid #d1d5db;background:white;color:#111827}
-    .controls button{flex:1;padding:10px;border:none;border-radius:6px;background:#2563eb;color:white;font-weight:600;cursor:pointer}
-    .controls button.secondary{background:#6b7280}
-    .badge{position:absolute;top:16px;left:16px;background:rgba(37,99,235,.9);padding:6px 12px;border-radius:8px;font-weight:700;color:white;font-size:18px}
-    .status{padding:10px;text-align:center;font-size:13px;color:#374151}
+    :root { --accent:#69b10d; --card:#fff; --bg:#f8fafc; --border:#e5e7eb; }
+    *{ box-sizing:border-box }
+    body{ margin:0; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:#0f172a;}
+    header{ position:sticky; top:0; background:#fff; border-bottom:1px solid var(--border); padding:12px 16px; display:flex; gap:12px; align-items:center; z-index:10;}
+    h1{ margin:0; font-size:18px; font-weight:800;}
+    .repo{ font-size:12px; color:#475569 }
+    .search{ margin-left:auto; display:flex; gap:8px; align-items:center;}
+    .search input{ height:36px; padding:0 10px; border:1px solid var(--border); border-radius:10px; width:200px; }
+    main{ padding:14px; max-width:880px; margin:0 auto; }
+    .list{ display:grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap:12px;}
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px; }
+    .name{ font-weight:800; font-size:14px; word-break:break-all;}
+    .meta{ font-size:12px; color:#64748b; display:flex; gap:8px; flex-wrap:wrap;}
+    .btns{ display:flex; gap:8px; flex-wrap:wrap;}
+    .btn{ border:1px solid var(--border); background:#fff; border-radius:10px; padding:8px 10px; font-weight:700; font-size:13px; cursor:pointer; }
+    .btn.primary{ background:var(--accent); color:#fff; border-color:transparent; }
+    .preview{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; line-height:1.45; color:#111827; background:#f1f5f9; border:1px dashed #cbd5e1; border-radius:10px; padding:10px; max-height:160px; overflow:auto; white-space:pre-wrap; }
+    .empty, .error{ text-align:center; color:#475569; margin-top:32px; }
+    footer{ padding:20px; text-align:center; color:#94a3b8; font-size:12px;}
   </style>
 </head>
 <body>
-<header><h1>💊 PillCounter – Web Prototype v3.4</h1></header>
+  <header>
+    <h1>📁 TXT 런처</h1>
+    <div class="repo" id="repoLabel"></div>
+    <div class="search">
+      <input id="q" type="search" placeholder="파일 검색…" />
+      <button class="btn" id="refreshBtn">새로고침</button>
+    </div>
+  </header>
 
-<main>
-  <div class="stage">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="overlay"></canvas>
-    <div id="totalBadge" class="badge">총 0개</div>
-  </div>
-  <div class="controls">
-    <input id="patient" type="text" placeholder="환자 이름 입력" onfocus="this.placeholder=''" onblur="this.placeholder='환자 이름 입력'" />
-    <button id="btnStart">카메라 시작</button>
-    <button id="btnShot">스마트 카운트</button>
-    <button id="btnSave" class="secondary">저장</button>
-  </div>
-  <div class="status" id="status"></div>
-</main>
+  <main>
+    <div id="list" class="list" aria-live="polite"></div>
+    <div id="empty" class="empty" style="display:none;">표시할 txt 파일이 없어요.</div>
+    <div id="err" class="error" style="display:none;"></div>
+  </main>
+
+  <footer>자동 목록 갱신 · GitHub Contents API 사용</footer>
 
 <script>
-const els = {
-  video: document.getElementById('video'),
-  overlay: document.getElementById('overlay'),
-  btnStart: document.getElementById('btnStart'),
-  btnShot: document.getElementById('btnShot'),
-  btnSave: document.getElementById('btnSave'),
-  totalBadge: document.getElementById('totalBadge'),
-  status: document.getElementById('status'),
-  patient: document.getElementById('patient')
-};
+/** =============== 설정 =============== **/
+const OWNER  = "hodewdew-creator";
+const REPO   = "ZHYUNK";
+const BRANCH = "main"; // 기본 브랜치
+const DIR    = "";     // 루트에서 txt만 가져오기
 
-let stream=null, capturedImage=null, detections=[];
-const W=720,H=960; const ctx=els.overlay.getContext('2d');
-els.overlay.width=W; els.overlay.height=H;
+/** =============== 내부 로직 =============== **/
+const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(DIR)}?ref=${encodeURIComponent(BRANCH)}`;
+const repoLabel = document.getElementById('repoLabel');
+repoLabel.textContent = `${OWNER}/${REPO}@${BRANCH}${DIR ? " / "+DIR : ""}`;
 
-els.btnStart.onclick=async()=>{
+const $list = document.getElementById('list');
+const $empty = document.getElementById('empty');
+const $err = document.getElementById('err');
+const $q = document.getElementById('q');
+const $refresh = document.getElementById('refreshBtn');
+
+let allFiles = [];
+
+async function fetchTxtList(){
+  $err.style.display = "none";
+  $empty.style.display = "none";
+  $list.innerHTML = "";
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
-    els.video.srcObject=stream;
-    els.status.textContent='카메라 시작됨';
-  }catch(e){els.status.textContent='카메라 접근 실패';}
-};
-
-function grabFrame(){
-  const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H;
-  const tctx=tmp.getContext('2d');
-  const vw=els.video.videoWidth,vh=els.video.videoHeight;
-  if(!vw||!vh) return null;
-  const targetAR=W/H, videoAR=vw/vh; let dw,dh,dx,dy;
-  if(videoAR>targetAR){ dh=H; dw=H*videoAR; dx=(W-dw)/2; dy=0; }
-  else { dw=W; dh=W/videoAR; dx=0; dy=(H-dh)/2; }
-  tctx.drawImage(els.video,dx,dy,dw,dh);
-  return tctx.getImageData(0,0,W,H);
-}
-
-function rgb2hsv(r,g,b){
-  r/=255; g/=255; b/=255;
-  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn; let h=0;
-  if(d!==0){ if(mx===r) h=((g-b)/d)%6; else if(mx===g) h=((b-r)/d)+2; else h=((r-g)/d)+4; h*=60; if(h<0) h+=360; }
-  const s=mx===0?0:d/mx; const v=mx; return [h,s,v];
-}
-function percentile(arr, p){ if(arr.length===0) return 0; const copy=Array.from(arr).sort((a,b)=>a-b); const k=Math.min(copy.length-1, Math.max(0, Math.floor((p/100)*copy.length))); return copy[k]; }
-function closeMask(mask,w,h){ const tmp=new Uint8Array(mask.length); for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let on=0; for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(mask[(y+dy)*w+(x+dx)]){on=1;break;} } if(on)break; } tmp[y*w+x]=on; } } const out=new Uint8Array(mask.length); for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let all=1; for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(!tmp[(y+dy)*w+(x+dx)]){all=0;break;} } if(!all)break; } out[y*w+x]=all; } } return out; }
-
-// --- K-means(2) on HSV to separate tray vs pills (downsampled for speed) ---
-function kmeans2_HSV(hsvArray, maxIter=10){
-  // hsvArray: Float32Array [h,s,v,h,s,v,...]
-  const n = hsvArray.length/3;
-  // init: low-S/V (tray) vs high-S/V (pills)
-  let c0=[0,0,0], c1=[180,0.8,0.8];
-  for(let it=0; it<maxIter; it++){
-    let sum0=[0,0,0], sum1=[0,0,0], n0=0, n1=0;
-    for(let i=0;i<n;i++){
-      const h=hsvArray[i*3], s=hsvArray[i*3+1], v=hsvArray[i*3+2];
-      const d0 = Math.min(Math.abs(h-c0[0]), 360-Math.abs(h-c0[0]))/180 + Math.abs(s-c0[1]) + Math.abs(v-c0[2]);
-      const d1 = Math.min(Math.abs(h-c1[0]), 360-Math.abs(h-c1[0]))/180 + Math.abs(s-c1[1]) + Math.abs(v-c1[2]);
-      if(d0<d1){ sum0[0]+=h; sum0[1]+=s; sum0[2]+=v; n0++; } else { sum1[0]+=h; sum1[1]+=s; sum1[2]+=v; n1++; }
+    const res = await fetch(apiBase, { headers: { "Accept": "application/vnd.github+json" }});
+    if(!res.ok){
+      const text = await res.text();
+      throw new Error(`API ${res.status}: ${text}`);
     }
-    if(n0>0){ c0=[sum0[0]/n0, sum0[1]/n0, sum0[2]/n0]; }
-    if(n1>0){ c1=[sum1[0]/n1, sum1[1]/n1, sum1[2]/n1]; }
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : [data];
+    const txts = items.filter(x => x.type === "file" && x.name.toLowerCase().endsWith(".txt"));
+
+    txts.sort((a,b)=> a.name.localeCompare(b.name, 'ko'));
+    allFiles = txts;
+    render(txts);
+  }catch(e){
+    console.error(e);
+    $err.textContent = "불러오기에 실패했어요. (깃허브 API 제한이거나 설정값이 잘못됨)";
+    $err.style.display = "block";
   }
-  return {c0,c1};
 }
 
-function detectPills(img){
-  const d=img.data, N=W*H;
-  // --- helpers (scoped) ---
-  function erodeLine(mask,w,h,len,dir){ const out=new Uint8Array(mask.length); const r=(len-1)/2|0; if(dir==='h'){ for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ let ok=1; for(let dx=-r;dx<=r;dx++){ const xx=x+dx; if(xx<0||xx>=w||!mask[y*w+xx]){ok=0;break;} } out[y*w+x]=ok; } } } else { for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ let ok=1; for(let dy=-r;dy<=r;dy++){ const yy=y+dy; if(yy<0||yy>=h||!mask[yy*w+x]){ok=0;break;} } out[y*w+x]=ok; } } } return out; }
-  function dilateLine(mask,w,h,len,dir){ const out=new Uint8Array(mask.length); const r=(len-1)/2|0; if(dir==='h'){ for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ let on=0; for(let dx=-r;dx<=r;dx++){ const xx=x+dx; if(xx>=0&&xx<w&&mask[y*w+xx]){on=1;break;} } out[y*w+x]=on; } } } else { for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ let on=0; for(let dy=-r;dy<=r;dy++){ const yy=y+dy; if(yy>=0&&yy<h&&mask[yy*w+x]){on=1;break;} } out[y*w+x]=on; } } } return out; }
-  function openCloseLine(mask,w,h){ const L=7; let hE=erodeLine(mask,w,h,L,'h'); let hO=dilateLine(hE,w,h,L,'h'); let vE=erodeLine(mask,w,h,L,'v'); let vO=dilateLine(vE,w,h,L,'v'); const merged=new Uint8Array(mask.length); for(let i=0;i<mask.length;i++) merged[i]=(hO[i]||vO[i])?1:0; // light close
-    return (function(){ const tmp=new Uint8Array(merged.length); for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let on=0; for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(merged[(y+dy)*w+(x+dx)]){on=1;break;} } if(on)break; } tmp[y*w+x]=on; } } const out=new Uint8Array(merged.length); for(let y=1;y<h-1;y++){ for(let x=1;x<w-1;x++){ let all=1; for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(!tmp[(y+dy)*w+(x+dx)]){all=0;break;} } if(!all)break; } out[y*w+x]=all; } } return out; })(); }
-
-  // Downsample HSV for k-means
-  const step=4, smallW=Math.floor(W/step), smallH=Math.floor(H/step);
-  const hsvSmall=new Float32Array(smallW*smallH*3); const vSmall=new Float32Array(smallW*smallH);
-  for(let y=0;y<smallH;y++){
-    for(let x=0;x<smallW;x++){
-      const sx=x*step, sy=y*step; const idx=(sy*W+sx)*4; const [h,s,v]=rgb2hsv(d[idx],d[idx+1],d[idx+2]);
-      const p=(y*smallW+x)*3; hsvSmall[p]=h; hsvSmall[p+1]=s; hsvSmall[p+2]=v; vSmall[y*smallW+x]=v;
-    }
+function render(files){
+  $list.innerHTML = "";
+  if(files.length === 0){
+    $empty.style.display = "block";
+    return;
   }
-  const {c0,c1}=kmeans2_HSV(hsvSmall,8);
-  const pillC=(c1[1]>=c0[1])?c1:c0; // higher saturation → pills
-  const vClip=Math.min(1.0, (function(arr){ const a=Array.from(arr).sort((x,y)=>x-y); const k=Math.min(a.length-1, Math.floor(a.length*0.98)); return a[k]; })(vSmall)*0.9);
+  files.forEach(f => {
+    const card = document.createElement('div');
+    card.className = "card";
 
-  const rawMask=new Uint8Array(N);
-  for(let p=0,i=0;p<N;p++,i+=4){
-    let [h,s,v]=rgb2hsv(d[i],d[i+1],d[i+2]);
-    v=Math.min(v,vClip); // glare suppression
-    const dh=Math.min(Math.abs(h-pillC[0]),360-Math.abs(h-pillC[0]))/180;
-    const ds=Math.abs(s-pillC[1]);
-    const dv=Math.abs(v-pillC[2]);
-    const score=dh*0.5 + ds*1.5 + dv*0.7; // emphasize saturation
-    rawMask[p]=(score<0.55 && s>0.12 && v>0.18)?1:0;
-  }
+    const name = document.createElement('div');
+    name.className = "name";
+    name.textContent = f.name;
 
-  const refined=openCloseLine(rawMask,W,H);
+    const meta = document.createElement('div');
+    meta.className = "meta";
+    meta.innerHTML = `
+      <span>size: ${formatSize(f.size)}</span>
+      <span>path: ${f.path}</span>
+    `;
 
-  // Connected components
-  const labels=new Int32Array(W*H); let current=1; const uf=[]; function find(x){ while(uf[x]>0) x=uf[x]; return x; } function union(a,b){ a=find(a); b=find(b); if(a!==b) uf[b]=a; }
-  for(let y=0;y<H;y++){
-    for(let x=0;x<W;x++){
-      const idx=y*W+x; if(!refined[idx]) continue; const nb=[]; if(x>0&&refined[idx-1]) nb.push(labels[idx-1]); if(y>0){ if(refined[idx-W]) nb.push(labels[idx-W]); if(x>0&&refined[idx-W-1]) nb.push(labels[idx-W-1]); if(x<W-1&&refined[idx-W+1]) nb.push(labels[idx-W+1]); }
-      if(nb.length===0){ labels[idx]=current; uf[current]=0; current++; } else { const m=Math.min(...nb.filter(v=>v>0)); labels[idx]=m; for(const n of nb){ if(n>0&&n!==m) union(m,n); } }
-    }
-  }
-  const stats=new Map(); for(let y=0;y<H;y++){ for(let x=0;x<W;x++){ const idx=y*W+x; const l=find(labels[idx]); if(!l) continue; labels[idx]=l; let st=stats.get(l); if(!st){ st={area:0,minx:x,miny:y,maxx:x,maxy:y}; stats.set(l,st);} st.area++; if(x<st.minx) st.minx=x; if(y<st.miny) st.miny=y; if(x>st.maxx) st.maxx=x; if(y>st.maxy) st.maxy=y; } }
+    const btns = document.createElement('div');
+    btns.className = "btns";
+    const rawUrl = f.download_url || rawUrlFromPath(f.path);
+    const viewBtn = btn("보기", "primary", async () => {
+      const text = await fetchText(rawUrl);
+      pre.textContent = firstLines(text, 2000);
+    });
+    const rawBtn = linkBtn("원본 열기", rawUrl);
+    const ghBtn  = linkBtn("GitHub 보기", f.html_url);
 
-  const minArea=Math.max(220, Math.floor((W*H)*0.00009)); const maxArea=Math.floor((W*H)*0.02);
-  const results=[]; stats.forEach(st=>{ const area=st.area; if(area<minArea||area>maxArea) return; if(st.minx<=2||st.miny<=2||st.maxx>=W-3||st.maxy>=H-3) return; const w=st.maxx-st.minx+1,h=st.maxy-st.miny+1; const ar=w/Math.max(1,h); if(ar<0.55||ar>5.0) return; const bboxArea=w*h; if(area/bboxArea<0.5) return; results.push({bbox:[st.minx,st.miny,w,h],include:true}); });
-  results.sort((a,b)=> (a.bbox[1]-b.bbox[1]) || (a.bbox[0]-b.bbox[0])); return results;
-}
+    btns.append(viewBtn, rawBtn, ghBtn);
 
-function drawOverlay(img,dets){
-  ctx.clearRect(0,0,W,H);
-  if(img){ const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(img,0,0); ctx.drawImage(tmp,0,0); }
-  ctx.lineWidth=3; ctx.font='bold 20px system-ui';
-  dets.forEach((d,i)=>{
-    const [x,y,w,h]=d.bbox;
-    ctx.strokeStyle=d.include?'#2563eb':'#ef4444';
-    ctx.globalAlpha=d.include?1.0:0.4;
-    ctx.strokeRect(x,y,w,h);
-    ctx.globalAlpha=1.0;
-    ctx.fillStyle='#111827'; ctx.fillText(i+1,x,y-6);
-    if(((i+1)%5)===0 && d.include){ ctx.fillStyle='#2563eb'; ctx.fillText('✓',x+w-16,y-6); }
+    const pre = document.createElement('pre');
+    pre.className = "preview";
+    pre.textContent = "미리보기를 누르면 내용이 보여요.";
+
+    card.append(name, meta, btns, pre);
+    $list.appendChild(card);
   });
-  const total=dets.filter(d=>d.include).length;
-  els.totalBadge.textContent=`총 ${total}개`;
 }
 
-els.overlay.addEventListener('click',(e)=>{
-  if(!capturedImage||detections.length===0) return;
-  const r=els.overlay.getBoundingClientRect();
-  const x=(e.clientX-r.left)*(W/r.width), y=(e.clientY-r.top)*(H/r.height);
-  for(let i=detections.length-1;i>=0;i--){ const [bx,by,bw,bh]=detections[i].bbox; if(x>=bx&&x<=bx+bw&&y>=by&&y<=by+bh){ detections[i].include=!detections[i].include; drawOverlay(capturedImage,detections); break; } }
+function btn(label, cls, onClick){
+  const b = document.createElement('button');
+  b.className = `btn ${cls||""}`;
+  b.textContent = label;
+  b.onclick = onClick;
+  return b;
+}
+function linkBtn(label, href){
+  const a = document.createElement('a');
+  a.className = "btn";
+  a.textContent = label;
+  a.href = href;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  return a;
+}
+async function fetchText(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error("raw fetch error");
+  return await res.text();
+}
+function firstLines(str, maxChars){
+  return (str.length > maxChars) ? str.slice(0,maxChars) + "\n…(이하 생략)" : str;
+}
+function formatSize(n){
+  if(n < 1024) return n + " B";
+  if(n < 1024*1024) return (n/1024).toFixed(1) + " KB";
+  return (n/1024/1024).toFixed(1) + " MB";
+}
+function rawUrlFromPath(path){
+  return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodeURIComponent(path).replace(/%2F/g,'/')}`;
+}
+
+$q.addEventListener('input', ()=>{
+  const q = $q.value.trim().toLowerCase();
+  if(!q){ render(allFiles); return; }
+  render(allFiles.filter(f => f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q)));
 });
 
-els.btnShot.onclick=()=>{
-  const frame=grabFrame(); if(!frame){els.status.textContent='영상 없음 (카메라 시작을 눌러주세요)'; return;}
-  capturedImage=frame; detections=detectPills(frame);
-  drawOverlay(frame,detections);
-  const n = detections.filter(d=>d.include).length;
-  els.status.textContent=`자동검출 완료 · 현재 ${n}개`;
-};
+$refresh.addEventListener('click', fetchTxtList);
 
-els.btnSave.onclick=()=>{
-  if(!capturedImage){els.status.textContent='먼저 스마트 카운트를 실행하세요';return;}
-  const included=detections.filter(d=>d.include);
-  const out=document.createElement('canvas'); out.width=W; out.height=H; const octx=out.getContext('2d');
-  const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H; tmp.getContext('2d').putImageData(capturedImage,0,0); octx.drawImage(tmp,0,0);
-  drawOverlay(null,included); octx.drawImage(els.overlay,0,0);
-  const name=els.patient.value.trim()||'이름없음'; const now=new Date(); const stamp=now.toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  octx.fillStyle='rgba(0,0,0,.6)'; octx.fillRect(16,H-40,W-32,30);
-  octx.fillStyle='#fff'; octx.font='16px bold system-ui'; octx.fillText(`${stamp} | ${name}`,24,H-20);
-  out.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);const y=now.getFullYear();const m=String(now.getMonth()+1).padStart(2,'0');const d=String(now.getDate()).padStart(2,'0');const hh=String(now.getHours()).padStart(2,'0');const mm=String(now.getMinutes()).padStart(2,'0');a.download=`${y}-${m}-${d}_${hh}-${mm}_${name}_캡슐-${included.length}.png`;a.click();},'image/png');
-};
+fetchTxtList();
 </script>
 </body>
 </html>
