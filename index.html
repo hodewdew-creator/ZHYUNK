@@ -6,34 +6,63 @@
   <title>TXT 런처</title>
   <meta name="theme-color" content="#69b10d">
   <style>
-    :root { --accent:#69b10d; --card:#fff; --bg:#f8fafc; --border:#e5e7eb; }
+    :root { --accent:#69b10d; --card:#fff; --bg:#f7fafc; --border:#e5e7eb; --text:#0f172a; }
     *{ box-sizing:border-box }
-    body{ margin:0; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:#0f172a;}
-    header{ position:sticky; top:0; background:#fff; border-bottom:1px solid var(--border); padding:12px 16px; display:flex; gap:12px; align-items:center; z-index:10;}
-    h1{ margin:0; font-size:18px; font-weight:800;}
+    body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text);}
+
+    /* Header */
+    header{ position:sticky; top:0; background:#fff; border-bottom:1px solid var(--border); padding:10px 14px; z-index:20; }
+    .bar{ max-width:980px; margin:0 auto; display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; }
+    h1{ margin:0; font-size:18px; font-weight:900; letter-spacing:.2px; }
     .repo{ font-size:12px; color:#475569 }
-    .search{ margin-left:auto; display:flex; gap:8px; align-items:center;}
-    .search input{ height:36px; padding:0 10px; border:1px solid var(--border); border-radius:10px; width:200px; }
-    main{ padding:14px; max-width:880px; margin:0 auto; }
-    .list{ display:grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap:12px;}
-    .card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px; }
-    .name{ font-weight:800; font-size:14px; word-break:break-all;}
-    .meta{ font-size:12px; color:#64748b; display:flex; gap:8px; flex-wrap:wrap;}
-    .btns{ display:flex; gap:8px; flex-wrap:wrap;}
-    .btn{ border:1px solid var(--border); background:#fff; border-radius:10px; padding:8px 10px; font-weight:700; font-size:13px; cursor:pointer; }
+    .tools{ display:flex; gap:8px; align-items:center; justify-self:end; }
+
+    /* Controls */
+    .input{ height:36px; padding:0 12px; border:1px solid var(--border); background:#fff; border-radius:10px; }
+    .btn{ height:36px; padding:0 12px; border:1px solid var(--border); background:#fff; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; }
     .btn.primary{ background:var(--accent); color:#fff; border-color:transparent; }
-    .preview{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; line-height:1.45; color:#111827; background:#f1f5f9; border:1px dashed #cbd5e1; border-radius:10px; padding:10px; max-height:160px; overflow:auto; white-space:pre-wrap; }
+    .btn.toggle[aria-pressed="true"]{ background:#111; color:#fff; border-color:#111; }
+    .btn.ghost{ background:transparent; }
+
+    /* Layout */
+    main{ padding:14px; max-width:980px; margin:0 auto; }
+    .list{ display:grid; grid-template-columns: repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px; }
+    .name{ font-weight:900; font-size:14px; word-break:break-all; display:flex; align-items:center; gap:8px; }
+    .name .chev{ font-size:16px; opacity:.7; transition: transform .18s ease; }
+    .meta{ font-size:12px; color:#64748b; display:flex; gap:8px; flex-wrap:wrap; }
+    .btns{ display:flex; gap:8px; flex-wrap:wrap; }
+    .preview{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; line-height:1.5; color:#111827; background:#f1f5f9; border:1px dashed #cbd5e1; border-radius:10px; padding:10px; max-height:180px; overflow:auto; white-space:pre-wrap; }
     .empty, .error{ text-align:center; color:#475569; margin-top:32px; }
-    footer{ padding:20px; text-align:center; color:#94a3b8; font-size:12px;}
+    footer{ padding:18px; text-align:center; color:#94a3b8; font-size:12px; }
+
+    /* —— 제목만 보기 모드 —— */
+    body.titles-only .card .meta,
+    body.titles-only .card .btns,
+    body.titles-only .card .preview { display:none; }
+    body.titles-only .card .name { cursor:pointer; }
+    body.titles-only .card.expanded .meta,
+    body.titles-only .card.expanded .btns,
+    body.titles-only .card.expanded .preview { display:block; }
+    body.titles-only .card.expanded .name .chev{ transform: rotate(90deg); }
+
+    /* compact list mode (optional future) */
   </style>
 </head>
 <body>
   <header>
-    <h1>📁 TXT 런처</h1>
-    <div class="repo" id="repoLabel"></div>
-    <div class="search">
-      <input id="q" type="search" placeholder="파일 검색…" />
-      <button class="btn" id="refreshBtn">새로고침</button>
+    <div class="bar">
+      <div>
+        <h1>📁 TXT 런처</h1>
+        <div class="repo" id="repoLabel"></div>
+      </div>
+      <div></div>
+      <div class="tools">
+        <input id="q" class="input" type="search" placeholder="파일 검색…" />
+        <button class="btn" id="refreshBtn" title="목록 새로고침">새로고침</button>
+        <button class="btn toggle" id="titlesOnlyBtn" aria-pressed="false" title="제목만 보기 토글">제목만</button>
+        <button class="btn ghost" id="expandAllBtn" style="display:none;" title="모두 펼치기/접기">모두 펼치기</button>
+      </div>
     </div>
   </header>
 
@@ -46,11 +75,13 @@
   <footer>자동 목록 갱신 · GitHub Contents API 사용</footer>
 
 <script>
-/** =============== 설정 =============== **/
-const OWNER  = "hodewdew-creator";
-const REPO   = "ZHYUNK";
-const BRANCH = "main"; // 기본 브랜치
-const DIR    = "";     // 루트에서 txt만 가져오기
+/** ================= 설정 =================
+ * 필요 시 아래 OWNER/REPO/BRANCH/DIR만 바꾸면 됩니다.
+ */
+const OWNER  = "hodewdew-creator";  // ← 변경 가능
+const REPO   = "ZHYUNK";            // ← 변경 가능
+const BRANCH = "main";              // ← 변경 가능
+const DIR    = "";                  // 특정 폴더만 볼 땐 "notes" 등
 
 /** =============== 내부 로직 =============== **/
 const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(DIR)}?ref=${encodeURIComponent(BRANCH)}`;
@@ -62,8 +93,12 @@ const $empty = document.getElementById('empty');
 const $err = document.getElementById('err');
 const $q = document.getElementById('q');
 const $refresh = document.getElementById('refreshBtn');
+const $titlesToggle = document.getElementById('titlesOnlyBtn');
+const $expandAll = document.getElementById('expandAllBtn');
 
 let allFiles = [];
+let titlesOnly = false;
+let expandStateAll = false; // 제목만 모드에서 전체 펼치기 상태
 
 async function fetchTxtList(){
   $err.style.display = "none";
@@ -79,6 +114,7 @@ async function fetchTxtList(){
     const items = Array.isArray(data) ? data : [data];
     const txts = items.filter(x => x.type === "file" && x.name.toLowerCase().endsWith(".txt"));
 
+    // 이름 오름차순
     txts.sort((a,b)=> a.name.localeCompare(b.name, 'ko'));
     allFiles = txts;
     render(txts);
@@ -91,49 +127,55 @@ async function fetchTxtList(){
 
 function render(files){
   $list.innerHTML = "";
-  if(files.length === 0){
-    $empty.style.display = "block";
-    return;
-  }
+  if(files.length === 0){ $empty.style.display = "block"; return; }
+
   files.forEach(f => {
     const card = document.createElement('div');
     card.className = "card";
 
     const name = document.createElement('div');
     name.className = "name";
-    name.textContent = f.name;
+    name.innerHTML = `<span class="chev">▸</span><span class="t">${escapeHtml(f.name)}</span>`;
 
     const meta = document.createElement('div');
     meta.className = "meta";
     meta.innerHTML = `
       <span>size: ${formatSize(f.size)}</span>
-      <span>path: ${f.path}</span>
+      <span>path: ${escapeHtml(f.path)}</span>
     `;
 
     const btns = document.createElement('div');
     btns.className = "btns";
     const rawUrl = f.download_url || rawUrlFromPath(f.path);
-    const viewBtn = btn("보기", "primary", async () => {
+    const viewBtn = button("보기", "primary", async () => {
       const text = await fetchText(rawUrl);
       pre.textContent = firstLines(text, 2000);
     });
     const rawBtn = linkBtn("원본 열기", rawUrl);
     const ghBtn  = linkBtn("GitHub 보기", f.html_url);
-
     btns.append(viewBtn, rawBtn, ghBtn);
 
     const pre = document.createElement('pre');
     pre.className = "preview";
     pre.textContent = "미리보기를 누르면 내용이 보여요.";
 
+    // 제목만 모드에서 개별 펼치기
+    name.addEventListener('click', ()=>{
+      if(!titlesOnly) return;
+      card.classList.toggle('expanded');
+    });
+
     card.append(name, meta, btns, pre);
     $list.appendChild(card);
   });
+
+  updateChevrons();
 }
 
-function btn(label, cls, onClick){
+function button(label, cls, onClick){
   const b = document.createElement('button');
   b.className = `btn ${cls||""}`;
+  b.type = 'button';
   b.textContent = label;
   b.onclick = onClick;
   return b;
@@ -163,15 +205,52 @@ function formatSize(n){
 function rawUrlFromPath(path){
   return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodeURIComponent(path).replace(/%2F/g,'/')}`;
 }
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+}
 
+// 검색
 $q.addEventListener('input', ()=>{
   const q = $q.value.trim().toLowerCase();
   if(!q){ render(allFiles); return; }
   render(allFiles.filter(f => f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q)));
 });
 
+// 새로고침
 $refresh.addEventListener('click', fetchTxtList);
 
+// 제목만 보기 토글
+$titlesToggle.addEventListener('click', ()=>{
+  titlesOnly = !titlesOnly;
+  document.body.classList.toggle('titles-only', titlesOnly);
+  $titlesToggle.setAttribute('aria-pressed', String(titlesOnly));
+  $expandAll.style.display = titlesOnly ? 'inline-block' : 'none';
+  expandStateAll = false;
+  $expandAll.textContent = '모두 펼치기';
+  updateChevrons();
+});
+
+// 모두 펼치기/접기 (제목만 모드에서만 노출)
+$expandAll.addEventListener('click', ()=>{
+  if(!titlesOnly) return;
+  expandStateAll = !expandStateAll;
+  document.querySelectorAll('.card').forEach(c => {
+    c.classList.toggle('expanded', expandStateAll);
+  });
+  $expandAll.textContent = expandStateAll ? '모두 접기' : '모두 펼치기';
+  updateChevrons();
+});
+
+function updateChevrons(){
+  // 제목만 모드일 때만 화살표 표시, 아니면 숨김
+  document.querySelectorAll('.card .chev').forEach((el)=>{
+    el.style.visibility = titlesOnly ? 'visible' : 'hidden';
+    const expanded = el.closest('.card')?.classList.contains('expanded');
+    el.style.transform = expanded ? 'rotate(90deg)' : 'rotate(0deg)';
+  });
+}
+
+// 초기 로드
 fetchTxtList();
 </script>
 </body>
